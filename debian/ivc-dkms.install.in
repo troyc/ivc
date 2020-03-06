@@ -1,0 +1,3 @@
+src/ 			usr/src/ivc-@UPSTREAM_VERSION@
+include/         	usr/src/ivc-@UPSTREAM_VERSION@
+dkms.conf		usr/src/ivc-@UPSTREAM_VERSION@

@@ -1,0 +1,2 @@
+dkms build %name/%version -k $(uname -r)
+dkms install %name/%version -k $(uname -r)

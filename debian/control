@@ -1,0 +1,30 @@
+Source: ivc-dkms
+Section: utils
+Priority: optional
+Build-Depends: debhelper (>= 7.0.50~)
+Build-Depends-Arch: cmake
+Build-Depends-Indep: dkms (>= 2.2)
+Standards-Version: 3.8.0
+Maintainer: SVRome <SVRome@ainfosec.com>
+
+Package: ivc-dev
+Section: libdevel
+Priority: optional
+Architecture: any
+Depends: 
+Description: "universal" ivc headers
+
+Package: ivc-dkms
+Architecture: all
+Depends: dkms (>= 2.2)
+Description: awesome ivc kernel modules
+
+Package: ivc-pipe
+Architecture: i386 amd64
+Depends: ${misc:Depends}
+Description: awesome ivc pipes
+
+Package: libivc0
+Architecture: i386 amd64
+Depends: ${misc:Depends}
+Description: awesome ivc shared object

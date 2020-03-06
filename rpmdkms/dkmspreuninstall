@@ -1,0 +1,1 @@
+dkms remove %name/%version --all

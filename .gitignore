@@ -1,0 +1,129 @@
+*\.o\.cmd
+*\.o
+*\.ko
+[mM]odule*
+*\.mod\.c
+*\.ko\.cmd
+\.tmp_versions
+*\.so
+Makefile~
+CMakeCache\.txt
+CMakeFiles
+cmake_install\.cmake
+compile_commands\.json
+install_manifest\.txt
+nbproject
+*\.txt~
+*\.c~
+src/ks/platform/windows/ivc Package/x64/Win7Debug/inf2cat.read.1.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/inf2cat-expand.write.1.tlog
+src/ks/platform/windows/Win7Debug/ivc Package/ivc.cat
+src/ks/platform/windows/Win7Debug/ivc Package/ivc.inf
+src/ks/platform/windows/Win7Debug/ivc Package/ivc.sys
+src/ks/platform/windows/Win7Debug/ivc.cer
+src/ks/platform/windows/Win7Debug/ivc.exp
+src/ks/platform/windows/Win7Debug/ivc.inf
+src/ks/platform/windows/Win7Debug/ivc.sys
+src/ks/platform/windows/Win7Debug/ivc.tlog/CL.read.1.tlog
+src/ks/platform/windows/Win7Debug/ivc.tlog/CL.write.1.tlog
+src/ks/platform/windows/Win7Debug/ivc.tlog/cl.command.1.tlog
+src/ks/platform/windows/Win7Debug/ivc.tlog/ivc.lastbuildstate
+src/ks/platform/windows/Win7Debug/ivc.tlog/ivc.write.1u.tlog
+src/ks/platform/windows/Win7Debug/ivc.tlog/link.command.1.tlog
+src/ks/platform/windows/Win7Debug/ivc.tlog/link.read.1.tlog
+src/ks/platform/windows/Win7Debug/ivc.tlog/link.write.1.tlog
+src/ks/platform/windows/Win7Debug/ivcPackage.cer
+src/ks/platform/windows/Win7Debug/signtool.command.1.tlog
+src/ks/platform/windows/Win7Debug/signtool.read.1.tlog
+src/ks/platform/windows/Win7Debug/signtool.write.1.tlog
+src/ks/platform/windows/Win7Debug/stampinf.command.1.tlog
+src/ks/platform/windows/Win7Debug/stampinf.read.1.tlog
+src/ks/platform/windows/Win7Debug/stampinf.write.1.tlog
+src/ks/platform/windows/Win8.1Debug/ivc Package/ivc.inf
+src/ks/platform/windows/Win8.1Debug/ivc.inf
+src/ks/platform/windows/Win8.1Debug/ivc.tlog/ivc.lastbuildstate
+src/ks/platform/windows/Win8.1Debug/ivc.tlog/unsuccessfulbuild
+src/ks/platform/windows/Win8.1Debug/stampinf.command.1.tlog
+src/ks/platform/windows/Win8.1Debug/stampinf.read.1.tlog
+src/ks/platform/windows/Win8.1Debug/stampinf.write.1.tlog
+src/ks/platform/windows/Win8.1Debug/tracewpp.command.1.tlog
+src/ks/platform/windows/Win8.1Debug/tracewpp.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/Inf2Cat.command.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.1612.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.1612.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.164.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.164.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.2456.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.2456.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.2880.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.2880.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.3232.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.3232.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.5004.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.5004.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.5404.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.5404.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.6104.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.6104.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.6196.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.6196.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.6392.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.6392.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.6612.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.6612.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.7008.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.7008.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.7100.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.7100.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.7284.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.7284.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.8040.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.8040.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.8168.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.8168.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat-expand.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/inf2cat.write.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/ivc Package.tlog/ivc Package.lastbuildstate
+src/ks/platform/windows/ivc Package/Win7Debug/signtool.command.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/signtool.read.1.tlog
+src/ks/platform/windows/ivc Package/Win7Debug/signtool.write.1.tlog
+src/ks/platform/windows/ivc Package/Win8.1Debug/ivc Package.tlog/ivc Package.lastbuildstate
+src/ks/platform/windows/ivc Package/Win8.1Debug/ivc Package.tlog/unsuccessfulbuild
+src/ks/platform/windows/ivc Package/x64/Win7Debug/Inf2Cat.command.1.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/inf2cat-expand.10024.read.1.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/inf2cat-expand.10024.write.1.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/inf2cat-expand.5604.read.1.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/inf2cat-expand.5604.write.1.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/inf2cat-expand.read.1.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/inf2cat.write.1.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/inf2cat.write.8.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/ivc Package.tlog/ivc Package.lastbuildstate
+src/ks/platform/windows/ivc Package/x64/Win7Debug/signtool.command.1.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/signtool.read.1.tlog
+src/ks/platform/windows/ivc Package/x64/Win7Debug/signtool.write.1.tlog
+src/ks/platform/windows/ivc.opensdf
+src/ks/platform/windows/ivc.sdf
+src/ks/platform/windows/x64/Win7Debug/ivc Package/ivc.cat
+src/ks/platform/windows/x64/Win7Debug/ivc Package/ivc.inf
+src/ks/platform/windows/x64/Win7Debug/ivc Package/ivc.sys
+src/ks/platform/windows/x64/Win7Debug/ivc.cer
+src/ks/platform/windows/x64/Win7Debug/ivc.exp
+src/ks/platform/windows/x64/Win7Debug/ivc.inf
+src/ks/platform/windows/x64/Win7Debug/ivc.sys
+src/ks/platform/windows/x64/Win7Debug/ivc.tlog/cl.command.1.tlog
+src/ks/platform/windows/x64/Win7Debug/ivc.tlog/cl.read.1.tlog
+src/ks/platform/windows/x64/Win7Debug/ivc.tlog/cl.write.1.tlog
+src/ks/platform/windows/x64/Win7Debug/ivc.tlog/ivc.lastbuildstate
+src/ks/platform/windows/x64/Win7Debug/ivc.tlog/ivc.write.1u.tlog
+src/ks/platform/windows/x64/Win7Debug/ivc.tlog/link.command.1.tlog
+src/ks/platform/windows/x64/Win7Debug/ivc.tlog/link.read.1.tlog
+src/ks/platform/windows/x64/Win7Debug/ivc.tlog/link.write.1.tlog
+src/ks/platform/windows/x64/Win7Debug/ivcPackage.cer
+src/ks/platform/windows/x64/Win7Debug/signtool.command.1.tlog
+src/ks/platform/windows/x64/Win7Debug/signtool.read.1.tlog
+src/ks/platform/windows/x64/Win7Debug/signtool.write.1.tlog
+src/ks/platform/windows/x64/Win7Debug/stampinf.command.1.tlog
+src/ks/platform/windows/x64/Win7Debug/stampinf.read.1.tlog
+src/ks/platform/windows/x64/Win7Debug/stampinf.write.1.tlog

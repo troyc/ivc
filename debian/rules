@@ -1,0 +1,40 @@
+#!/usr/bin/make -f
+
+UPSTREAM_VERSION  := $(shell dpkg-parsechangelog | grep Version: | cut -d" " -f2 | cut -d"-" -f1)
+UPSTREAM_FOLDER := ivc-dkms-$(UPSTREAM_VERSION)
+TEMP_BUILD_UP := debian/build-upstream-tarball
+TEMP_UP_FOLDER := $(TEMP_BUILD_UP)/$(UPSTREAM_FOLDER)
+ORIG_TAR_GZ_NAME := ivc-dkms_$(UPSTREAM_VERSION).orig.tar.gz
+FILE_LIST := $(shell ls | grep -v debian)
+
+gen-upstream-tarball:
+	@echo "Building: "$(ORIG_TAR_GZ_NAME)
+	mkdir -p $(TEMP_UP_FOLDER)
+	cp -auxf $(FILE_LIST) $(TEMP_UP_FOLDER)
+	cd $(TEMP_BUILD_UP) && tar -cvzf $(CURDIR)/../$(ORIG_TAR_GZ_NAME) $(UPSTREAM_FOLDER) && cd $(CURDIR)
+	mkdir -p ../build-area
+	cp ../$(ORIG_TAR_GZ_NAME) ../build-area
+	rm -rf $(TEMP_BUILD_UP)
+
+%:
+	dh "$@" --with dkms
+
+# TODO: SV-496
+override_dh_usrlocal-arch:
+	echo "we have a nauughty package that forcibly installs to /usr/local"
+
+override_dh_auto_install-arch:
+	$(MAKE) DESTDIR=$$(pwd)/debian/tmp prefix=/usr install_user install_tests
+
+# we don't actually build/clean the source here, it's dkms
+override_dh_auto_clean-indep:
+	rm -f debian/ivc-dkms.install
+
+override_dh_auto_install-indep:
+	echo "Don't compile when building only dkms"
+
+override_dh_auto_build-indep:
+	sed 's/@UPSTREAM_VERSION@/'$(UPSTREAM_VERSION)/ debian/ivc-dkms.install.in >debian/ivc-dkms.install
+
+override_dh_shlibdeps:
+	    dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
