@@ -11,15 +11,15 @@ SOURCES += ../ivcd.cpp
 SOURCES += ../ivcbackend.cpp
 SOURCES += ../guestmanager.cpp
 SOURCES += ../guestcontroller.cpp
-SOURCES += ../ringbuffer.c
+SOURCES += ../../data-structures/ringbuffer.c
 
 HEADERS += ../ivcbackend.h
 HEADERS += ../guestmanager.h
 HEADERS += ../guestcontroller.h
-HEADERS += ../ringbuffer.h
+HEADERS += ../../data-structures/ringbuffer.h
 HEADERS += ../ringbuf.h
 
-INCLUDEPATH += "$$(STAGING_DIR_TARGET)/usr/include"
+INCLUDEPATH += "../../../include/core ../../data-structures"
 
 LIBS += -lxenbe
 

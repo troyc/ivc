@@ -2,13 +2,15 @@
 #define RINGBUF__H
 
 extern "C" {
-#include "ringbuffer.h"
+#include <ringbuffer.h>
 }
 
 #include <iostream>
 
 #define CLIENT_TO_SERVER_CHANNEL 0
 #define SERVER_TO_CLIENT_CHANNEL 1
+
+#define LOGLEVEL XenBackend::LogLevel::logDEBUG
 
 class ringbuf {
 public:

@@ -62,7 +62,7 @@ int libivc_getLocalBuffer(struct libivc_client *ivc, char **buffer)
 int libivc_getLocalBufferSize(struct libivc_client *ivc, size_t *buffSize)
 {
   if(buffSize && ivc) {
-    *buffSize = ivc->size;
+    *buffSize = ivc->num_pages * 4096;
     return 0;
   }
   
@@ -72,7 +72,7 @@ int libivc_getLocalBufferSize(struct libivc_client *ivc, size_t *buffSize)
 int libivc_getRemoteDomId(struct libivc_client *ivc, uint16_t *dom)
 {
   if(dom && ivc) {
-    *dom = ivc->domid;
+    *dom = ivc->remote_domid;
     return 0;
   }
   return -EINVAL; 

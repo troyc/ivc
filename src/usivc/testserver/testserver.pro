@@ -9,9 +9,9 @@ TEMPLATE = app
 
 SOURCES += ../testserver.cpp
 
-HEADERS += ../libivc.h
+HEADERS += ../../../include/core/libivc.h
 
-INCLUDEPATH += "$$(STAGING_DIR_TARGET)/usr/include"
+#INCLUDEPATH += "$$(STAGING_DIR_TARGET)/usr/include"
 
 LIBS += -lxenbe -livc -lpvbackendhelper
 

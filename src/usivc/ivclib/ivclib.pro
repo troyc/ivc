@@ -8,10 +8,17 @@ DESTDIR = ../lib
 TEMPLATE = lib
 
 SOURCES += ../libivc.cpp
-HEADERS += ../libivc.h
-HEADERS += ../libivc_core.h
+SOURCES += ../libivc_core.cpp
+SOURCES += ../ivc_client.cpp
+SOURCES += ../event_controller.cpp
 
-INCLUDEPATH += "$$(STAGING_DIR_TARGET)/usr/include"
+HEADERS += ../../../include/core/libivc.h
+HEADERS += ../libivc_core.h
+HEADERS += ../ivc_client.h
+HEADERS += ../event_controller.h
+
+INCLUDEPATH += "../../../include/core"
+INCLUDEPATH += "../../data-structures"
 
 LIBS += -lxenbe
 
