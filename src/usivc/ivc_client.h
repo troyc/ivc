@@ -13,7 +13,6 @@ extern "C" {
 #include <stdio.h>
 #include <poll.h>
 #include "libivc.h"
-#undef offsetof
 #include "libivc_private.h"
 };
 

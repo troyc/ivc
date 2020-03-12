@@ -18,7 +18,6 @@
 
 extern "C" {
 #include <libivc.h>
-#undef offsetof
 #include <libivc_private.h>
 #include <sys/socket.h>
 #include <sys/un.h>

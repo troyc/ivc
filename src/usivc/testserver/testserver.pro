@@ -11,7 +11,7 @@ SOURCES += ../testserver.cpp
 
 HEADERS += ../../../include/core/libivc.h
 
-#INCLUDEPATH += "$$(STAGING_DIR_TARGET)/usr/include"
+INCLUDEPATH += "../../../include/core"
 
 LIBS += -lxenbe -livc -lpvbackendhelper
 

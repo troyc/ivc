@@ -230,7 +230,9 @@ static INLINE void list_splice_init(struct list_head *list,
 __pragma(warning(pop))
 #endif
 
+#ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#endif
 
 /**
  * container_of - cast a member of a structure out to the containing structure

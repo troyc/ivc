@@ -15,6 +15,29 @@
 #include "ringbuf.h"
 
 #include "libivc_core.h"
+#define IVC_FRONTEND_IVC_PATH "/local/domain/%d/data/ivc"
+#define IVC_FRONTEND_DEVICE_PATH "/local/domain/%d/data"
+#define IVC_FRONTEND_IVC_NODE "ivc"
+#define IVC_MAX_PATH 256
+#define IVC_FRONTEND_RO_PAGE "frontend-page-ro"
+#define IVC_FRONTEND_RW_PAGE "frontend-page-rw"
+#define IVC_FRONTEND_EVENT_CHANNEL "frontend-event"
+#define IVC_FRONTEND_STATUS "frontend-status"
+#define IVC_BACKEND_STATUS "backend-status"
+
+#define IVC_GRANTS_PER_MESSAGE 25
+#define IVC_POSIX_SHARE_NAME_SIZE 50
+#define IVC_STATUS_SIZE 25
+#define IVC_BUFFER_SIZE PAGE_SIZE
+#define IVC_DOM_ID 0
+#define IVC_PORT 0
+#define IVC_MAGIC 0xD00D
+
+#define _TRACE() pr_info("%s : %d\n", __func__, __LINE__)
+
+typedef enum BACKEND_STATUS {
+    DISCONNECTED, CONNECTED, FAILED
+} BACKEND_STATUS_T;
 
 class GuestController : public QObject {
     Q_OBJECT

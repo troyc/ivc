@@ -19,7 +19,8 @@ HEADERS += ../guestcontroller.h
 HEADERS += ../../data-structures/ringbuffer.h
 HEADERS += ../ringbuf.h
 
-INCLUDEPATH += "../../../include/core ../../data-structures"
+INCLUDEPATH += "../../../include/core"
+INCLUDEPATH += "../../data-structures"
 
 LIBS += -lxenbe
 
