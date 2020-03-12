@@ -17,13 +17,14 @@
 #include <xen/be/XenEvtchn.hpp>
 
 extern "C" {
+#include <libivc.h>
+#undef offsetof
+#include <libivc_private.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <poll.h>
-#include <libivc.h>
-#include <libivc_private.h>
 };
 
 #include "ringbuf.h"
@@ -74,7 +75,7 @@ static inline void dump_message(libivc_message_t *msg)
 
 static inline void dump_buf(uint32_t *buf, uint32_t len)
 {
-    for(int i = 0; i < len/(sizeof(uint32_t)); i++) {
+    for(unsigned int i = 0; i < len/(sizeof(uint32_t)); i++) {
         if(i % 16 == 0) {
             std::cout << '\n';
         }
