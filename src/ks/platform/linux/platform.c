@@ -151,22 +151,6 @@ static mmap_info_t * __find_mmap_info_by_id(unsigned long id)
 }
 
 
-/**
- * Returns an MMAP "cookie" that can be passed to mmap to uniquely identify the
- * relevant mappedMemory.
- *
- * (Note that this isn't the cleanest way of doing things, but this is done in
- *  several other pieces of the kernel-- most notably DRM.)
- */
-static unsigned long cookie_for_mapped_mem(mapped_mem_descriptor_t * mappedMem)
-{
-    // Our cookies are essentially just our ID numbers, shifted to the left
-    // by the page offset. When these are passed to vm_mmap, they will
-    // automatically be right shifted by PAGE_SHIFT-- so mmap will receive
-    // the unshifted ID number.
-    return mappedMem->id << PAGE_SHIFT;
-}
-
 
 /**
  * Returns an MMAP "cookie" that can be passed to mmap to uniquely identify the
@@ -178,82 +162,6 @@ static unsigned long cookie_for_mapped_mem(mapped_mem_descriptor_t * mappedMem)
 static unsigned long cookie_for_mmap_info(mmap_info_t * mmap_info)
 {
     return mmap_info->id << PAGE_SHIFT;
-}
-
-
-
-void mapped_mem_descriptor_constructor(mapped_mem_descriptor_t **desc, uint32_t numPages)
-{
-    mapped_mem_descriptor_t *mappedMem = NULL;
-
-    if(!desc) return;
-
-    mappedMem = vzalloc(sizeof(*mappedMem));
-    if(!mappedMem)
-    {
-        *desc = NULL;
-        return;
-    }
-
-    //Assign the mapped memory a unique ID number.
-    mappedMem->id = next_mmap_cookie++;
-
-    INIT_LIST_HEAD(&mappedMem->listHead);
-
-    mappedMem->numGrants = numPages;
-
-    mappedMem->pages = vzalloc(sizeof(*mappedMem->pages) * numPages);
-    if(!mappedMem->pages)
-    {
-        kvfree(mappedMem);
-        *desc = NULL;
-        return;
-    }
-
-    mappedMem->grantHandles = vzalloc(sizeof(*mappedMem->grantHandles) * numPages);
-    if(!mappedMem->grantHandles)
-    {
-        kvfree(mappedMem->pages);
-        kvfree(mappedMem);
-        *desc = NULL;
-        return;
-    }
-
-    mappedMem->grefs = vzalloc(sizeof(*mappedMem->grantHandles) * numPages);
-    if(!mappedMem->grefs)
-    {
-        kvfree(mappedMem->grantHandles);
-        kvfree(mappedMem->pages);
-        kvfree(mappedMem);
-        *desc = NULL;
-        return;
-    }
-
-    // Return the constructed descriptor;
-    *desc = mappedMem;
-
-    return;
-}
-
-void mapped_mem_descriptor_destructor(mapped_mem_descriptor_t **desc)
-{
-    mapped_mem_descriptor_t *mappedMem = *desc;
-
-    if(!desc) return;
-
-    if((uintptr_t)mappedMem < (uintptr_t)4096) return;
-
-    if(mappedMem->grantHandles)
-        kvfree(mappedMem->grantHandles);
-
-    if(mappedMem->pages)
-        kvfree(mappedMem->pages);
-
-    kvfree(mappedMem);
-
-    *desc = NULL;
-
-    return;
 }
 
 int ivc_unmap_refs_with_noncontiguous_ops(struct gnttab_unmap_grant_ref *unmap_ops,
@@ -1230,9 +1138,6 @@ int
 ks_platform_map_to_userspace(char *kAddress, char **uAddress,
                              size_t memSize, file_context_t *context)
 {
-    bool pv_userspace_mapping;
-    bool is_inter_vm_mapping;
-
     shareable_mem_alloc_t *memAlloc;
     mmap_info_t *mmap_info = NULL;
     void *addr = NULL; // return from vm_mmap
@@ -1252,16 +1157,14 @@ ks_platform_map_to_userspace(char *kAddress, char **uAddress,
         memAlloc->context = context;
     }
 
-    context->mappedMem = NULL;
-
     // if the match wasn't found, return error code.
-    libivc_assert(!(memAlloc == NULL && mappedMem == NULL), INVALID_PARAM);
+    libivc_assert(!(memAlloc == NULL), INVALID_PARAM);
     mmap_info = vzalloc(sizeof(mmap_info_t));
     libivc_checkp(mmap_info, OUT_OF_MEM);
 
     mmap_info->id = next_mmap_cookie++;
-    mmap_info->numPages = memAlloc != NULL ? memAlloc->numPages : mappedMem->numGrants;
-    mmap_info->pages = memAlloc != NULL ? memAlloc->pages : mappedMem->pages;
+    mmap_info->numPages = memAlloc->numPages;
+    mmap_info->pages = memAlloc->pages;
 
     if(xen_hvm_domain()) libivc_checkp(mmap_info->pages, INTERNAL_ERROR);
     libivc_assert(mmap_info->numPages > 0, INTERNAL_ERROR);
@@ -1427,25 +1330,7 @@ ks_platform_ioctl(struct file *f, unsigned int cmd, unsigned long payload)
             libivc_assert((rc = copy_from_user((void *) &usClient, (void *) payload,
                                                (unsigned long) sizeof(struct libivc_client_ioctl_info))) == SUCCESS, -EINVAL);
 
-            if(_IOC_NR(cmd) == IVC_PV_MMAP_STAGE2_IOCTL)
-            {
-                if((xen_pv_domain() || xen_initial_domain()) && use_ptemod)
-                {
-                    struct libivc_client *client = ks_ivc_core_find_internal_client(&usClient);
-                    libivc_assert(client != NULL, -EINVAL);
-
-                    // If this mapping is targeting a remote domain,
-                    // finish the PV mapping. Otherwise, our PV mapping
-                    // should have completed during the normal mmap.
-                    if(client->remote_domid != domId) {
-                        err = finish_pv_mapping(client, context);
-
-                        usClient.buffer    = client->buffer;
-                        usClient.num_pages = client->num_pages;
-                    }
-                }
-            }
-            else if(_IOC_NR(cmd) == IVC_MUNMAP_IOCTL)
+            if(_IOC_NR(cmd) == IVC_MUNMAP_IOCTL)
             {
                 struct libivc_client *client = ks_ivc_core_find_internal_client(&usClient);
                 libivc_assert(client != NULL, -EINVAL);
@@ -1504,7 +1389,6 @@ static int
 ks_platform_mmap(struct file *filp, struct vm_area_struct *vma)
 {
     int rc = SUCCESS;
-    mapped_mem_descriptor_t *mappedMem = NULL;
     int i, mapping_id;
 
     //this shouldn't fail, but always check anyway....
@@ -1530,63 +1414,30 @@ ks_platform_mmap(struct file *filp, struct vm_area_struct *vma)
     // don't cache data in the pages
     vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
-    // Attempt to find a remote memory mapping for the given mapping ID.
-    mappedMem = find_mapped_mem_by_id(mapping_id);
+    // Find information about the relevant guest mapping.
+    mmap_info_t *mmap_info = __find_mmap_info_by_id(mapping_id);
 
-    // Determine if we should use the PV/PTE mapping path:
-    // - If we have a mappedMem object, this isn't a same-domain mapping.
-    // - If we have use_ptemod and we're a PV domain, we need to use the PTE path.
-    if(xen_pv_domain() && mappedMem && use_ptemod)
+    // if the mmap_info wasn't set, then we shouldn't be mmapping anything.
+    libivc_checkp(mmap_info, -EINVAL);
+
+    // make sure the user space process has enough space to map into.
+    if((vma->vm_end - vma->vm_start) < (mmap_info->numPages * PAGE_SIZE))
     {
-        BUG_ON(mappedMem->remoteDomId == domId);
-
-        // Only map to userspace if we have the deferred_grant_map_t in private
-        vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP | VM_DONTCOPY | VM_SHARED;
-
-        // Let the MM subsystem know that someone else (Xen) will be handling
-        // the page tables for this region, and so it shouldn't try to manage
-        // the relevant pages. This flag (PFNMAP) is typically used when the
-        // underlying pages are provided by a piece of hardware-- but it's
-        // very easily applicable to applications running in foreign domains!
-        //
-        // Think very carefully before you remove this flag, as it changes
-        // the page location logic (e.g. vm_normal_page).
-        vma->vm_flags |= VM_PFNMAP;
-
-        mappedMem->vma = vma;
-        vma->vm_private_data = mappedMem;
-        mappedMem->mapOps = vzalloc(sizeof(struct gnttab_map_grant_ref)*mappedMem->numGrants);
-        mappedMem->unmapOps = vzalloc(sizeof(struct gnttab_unmap_grant_ref)*mappedMem->numGrants);
-
-        apply_to_page_range(vma->vm_mm, vma->vm_start, vma->vm_end - vma->vm_start, 
-                            set_grant_ptes, mappedMem);
+        printk(KERN_WARNING "[ivc]: Not enough space to map in memory.\n");
+        return -ENOSPC;
     }
-    else
+
+    libivc_checkp(mmap_info->pages, -EINVAL);
+
+    for(i = 0; i < mmap_info->numPages; i++)
     {
-        // Find information about the relevant guest mapping.
-        mmap_info_t *mmap_info = __find_mmap_info_by_id(mapping_id);
-
-        // if the mmap_info wasn't set, then we shouldn't be mmapping anything.
-        libivc_checkp(mmap_info, -EINVAL);
-
-        // make sure the user space process has enough space to map into.
-        if((vma->vm_end - vma->vm_start) < (mmap_info->numPages * PAGE_SIZE))
-        {
-            printk(KERN_WARNING "[ivc]: Not enough space to map in memory.\n");
-            return -ENOSPC;
-        }
-
-        libivc_checkp(mmap_info->pages, -EINVAL);
-
-        for(i = 0; i < mmap_info->numPages; i++)
-        {
-            // on success, this should return SUCCESS (0)
-            // if it's anything but zero, something went wrong.  Should only happen if
-            // user space process crashed.
-            libivc_assert((rc = vm_insert_page(vma, vma->vm_start + i * PAGE_SIZE,
-                                               mmap_info->pages[i])) == SUCCESS, -EACCES);
-        }
+        // on success, this should return SUCCESS (0)
+        // if it's anything but zero, something went wrong.  Should only happen if
+        // user space process crashed.
+        libivc_assert((rc = vm_insert_page(vma, vma->vm_start + i * PAGE_SIZE,
+                                           mmap_info->pages[i])) == SUCCESS, -EACCES);
     }
+
     return rc;
 }
 
@@ -1604,15 +1455,6 @@ ks_platform_mmap(struct file *filp, struct vm_area_struct *vma)
 static int
 ks_platform_munmap(struct libivc_client *client, file_context_t *f)
 {
-    //TODO: Respect autotranslated physmap.
-    bool has_grants_to_unmap = (client->remote_domid != domId);
-    bool use_pte_mode = (xen_pv_domain() || xen_initial_domain());
-
-    // If this is a PV intra-domain mapping, tear down the grants
-    // while we still have the PTEs.
-    if(has_grants_to_unmap && use_pte_mode)
-        ks_platform_unmap_grants_pv_user(client, f);
-
     // Tear the VMA out from under the userspace, which should no longer
     // be using it (as it either called munmap, or is a dying process).
     if(client->buffer)
@@ -1672,7 +1514,6 @@ ks_platform_ivc_init(void)
     INIT_LIST_HEAD(&eventCallbacks);
     // initialize the mutex that is used to lock the above list.
     mutex_init(&eventMutex);
-    mutex_init(&mappedMemoryMutex);
 
     // create the work queue which will be used for moving calls from an
     // interrupt context to a kernel threaded process context.

@@ -6,9 +6,6 @@
 
 #include <platform.h>
 #include "ivc_ioctl_defs.h"
-#ifdef __linux
-#include <xenback.h>
-#endif
 #include <libivc.h>
 #include <libivc_debug.h>
 #include <libivc_private.h>
