@@ -733,12 +733,6 @@ ks_ivc_core_handle_connect_msg(libivc_message_t *msg)
                                  ks_ivc_client_remote_event_fired)) == SUCCESS, ERROR);
         respMessage.status = SUCCESS;
     } 
-    // Otherwise, map in the local memory-- but skip event channel creation,
-    // as we can communicate events directly.
-    else {
-        libivc_assert_goto((rc = ks_platform_map_local_memory((void *)msg->kernel_address, msg->port, &newClient->buffer,
-                                     newClient->num_pages, server->context)) == SUCCESS, ERROR);
-    }
 
     rc = INTERNAL_ERROR;
 
@@ -765,8 +759,6 @@ ERROR:
         {
             if(newClient->remote_domid != domId)
                 ks_platform_unmap_remote_grants(newClient->buffer);
-            else
-                ks_platform_unmap_local_memory(newClient->buffer);
         }
 
         libivc_put_client(newClient);
@@ -1136,10 +1128,6 @@ ks_ivc_core_disconnect(struct libivc_client *client)
     if (client->buffer && !client->server_side) 
     {
         ks_platform_free_shared_mem(client->buffer);
-    } 
-    else if (client->buffer && (client->remote_domid == domId)) 
-    {
-        ks_platform_unmap_local_memory(client->buffer);
     } 
     else if(client->buffer)
     {
