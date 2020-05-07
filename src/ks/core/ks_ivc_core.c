@@ -432,16 +432,7 @@ ks_ivc_send_connect_message(struct libivc_client *client)
     }
 
 
-    if (!xen_initial_domain()) 
-    {
-        targetComm = ivcXenClient;
-    }
-#ifdef __linux
-    else 
-    {
-        targetComm = ks_platform_get_domu_comm(client->remote_domid);
-    }
-#endif
+    targetComm = ivcXenClient;
 
     libivc_checkp(targetComm, INTERNAL_ERROR);
     libivc_checkp(targetComm->ringbuffer, INTERNAL_ERROR);

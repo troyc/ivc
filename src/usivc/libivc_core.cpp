@@ -8,7 +8,7 @@ libivc_core::libivc_core() : mLog("libivc_core", LOGLEVEL) {
     }
 
     const char *path = "/tmp/ivc_control";
-    
+
     memset(&address, 0x00, sizeof(address));
     address.sun_family = AF_UNIX;
     ::strncpy((char*)&address.sun_path, path, 107);
@@ -22,7 +22,7 @@ libivc_core::libivc_core() : mLog("libivc_core", LOGLEVEL) {
     if (!mSockFp) {
         throw std::system_error(errno, std::generic_category(), "Failed to create file pointer to socket");
     }
-        
+
     mMonitor = new std::thread(&libivc_core::monitorCommands, this);
 }
 
@@ -154,7 +154,7 @@ libivc_core::handleConnectMessage(libivc_message_t *msg) {
 
     uint32_t key = dom_port_key(msg->from_dom, msg->port);
     uint32_t anykey = dom_port_key(LIBIVC_DOMID_ANY, msg->port);
-        
+
     // Have to provide a connected client here...
     if(mCallbackMap.contains(key)) {
         struct libivc_client *client = createClient(msg->from_dom,
@@ -188,7 +188,7 @@ libivc_core::handleConnectMessage(libivc_message_t *msg) {
 }
 
 void
-libivc_core::handleDisconnectMessage(libivc_message_t *msg) {       
+libivc_core::handleDisconnectMessage(libivc_message_t *msg) {
     uint32_t key = dom_port_key(msg->from_dom, msg->port);
     destroyClient(mClients[key]->client());
 }
@@ -200,7 +200,7 @@ libivc_core::monitorCommands()
     memset(&fd, 0x00, sizeof(fd));
     int ret = 0;
 
-    fd.fd = mSock; 
+    fd.fd = mSock;
     fd.events = POLLIN;
     while(poll(&fd, 1, -1)) {
         libivc_message_t msg{0};
@@ -233,7 +233,7 @@ libivc_core::monitorCommands()
         }
     }
 }
-    
+
 struct libivc_server *
 libivc_core::registerServer(uint16_t port,
                             uint16_t domid,
@@ -241,7 +241,7 @@ libivc_core::registerServer(uint16_t port,
                             libivc_client_connected cb,
                             void *opaque) {
     std::lock_guard<std::mutex> lock(mServerLock);
-        
+
     uint32_t key = dom_port_key(domid, port);
     LOG(mLog, DEBUG) << "Domid: " << domid << " Port: " << port << " Client id: " << client_id << " Key: " << key;
     mCallbackMap[key] = cb;
@@ -254,7 +254,7 @@ void
 libivc_core::shutdownServer(struct libivc_server *server) {
     uint32_t key = (uint32_t)(((uintptr_t)server) & 0x00000000FFFFFFFFF);
     mCallbackMap[key] = nullptr;
-    mCallbackArgumentMap[key] = nullptr;            
+    mCallbackArgumentMap[key] = nullptr;
 }
 
 struct libivc_server *
@@ -272,7 +272,7 @@ libivc_core::read(char *msg, uint32_t size) {
     std::lock_guard<std::mutex> lock(mClientLock);
     ::read(mSock, msg, size);
 }
-  
+
 void
 libivc_core::write(void *buf, uint32_t size) {
     std::lock_guard<std::mutex> lock(mClientLock);

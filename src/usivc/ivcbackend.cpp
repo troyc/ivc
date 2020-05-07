@@ -3,7 +3,7 @@
 
 IvcBackend::IvcBackend() :
     mManager(mXs),
-    mLog("ivcd", LOGLEVEL)    
+    mLog("ivcd", LOGLEVEL)
 {
     TRACE;
     QObject::connect(&mManager, &GuestManager::addGuest, this, &IvcBackend::addGuest, Qt::QueuedConnection);
@@ -15,7 +15,7 @@ IvcBackend::IvcBackend() :
     mProcessServer.listen("/tmp/ivc_control");
 
     mTimer = new QTimer();
-    QObject::connect(mTimer, SIGNAL(timeout()), this, SLOT(pollForEvents()));
+    QObject::connect(mTimer, SIGNAL(timeout()), this, SLOT(pollForEvents()), Qt::QueuedConnection);
 }
 
 IvcBackend::~IvcBackend()

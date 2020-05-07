@@ -24,7 +24,7 @@ bool GuestManager::containsDomain(const std::vector<domid_t> &domList, domid_t d
 
   return false;
 }
-  
+
 void GuestManager::printDomains(const std::vector<domid_t> &domList)
 {
   std::cout << "Domain list: ";
@@ -33,7 +33,7 @@ void GuestManager::printDomains(const std::vector<domid_t> &domList)
   }
   std::cout << '\n';
 }
-  
+
 void GuestManager::syncRunningDomains(std::vector<domid_t> &runningDomains,
 				      const std::vector<domid_t> &currentDomains)
 {
@@ -70,13 +70,13 @@ void GuestManager::removeDomain(std::vector<domid_t> &domList, domid_t domid)
     i++;
   }
 }
-  
+
 void GuestManager::localDomainCallback(const std::string &path)
 {
     std::vector<std::string> directoryDomains = mXs.readDirectory(path);
     std::vector<domid_t> currentDomains;
     std::lock_guard<std::mutex> lock(mDomainListLock);
-    
+
     for (const auto &d : directoryDomains) {
       domid_t domid = stoul(d);
       if (!containsDomain(currentDomains, domid)) {
@@ -88,6 +88,6 @@ void GuestManager::localDomainCallback(const std::string &path)
       syncRunningDomains(mRunningDomains, currentDomains);
       printDomains(currentDomains);
     }
-    
+
     return;
 }

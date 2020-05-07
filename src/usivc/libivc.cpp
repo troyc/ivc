@@ -6,6 +6,7 @@ libivc_core *c = nullptr;
 int libivc_init()
 {
   if(!c) {
+      std::cout << "DING DING DING DING !!!!\n";
     c = new libivc_core();
   }
 }

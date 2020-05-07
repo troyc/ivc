@@ -13,7 +13,7 @@ GuestController::GuestController(XenBackend::XenStore &xs,
     QObject::connect(this, &GuestController::controlEventReady, this, &GuestController::processControlEvent, Qt::QueuedConnection);
     mFrontendCallback = std::function<void(const std::string &)>
         ([&](const std::string path){ frontendCallback(path); });
-    mXs.writeUint(mXs.getDomainPath(mDomid) + "/data/ivc/backend-status", DISCONNECTED);   
+    mXs.writeUint(mXs.getDomainPath(mDomid) + "/data/ivc/backend-status", DISCONNECTED);
     mXs.setWatch(mXs.getDomainPath(mDomid) + "/data/ivc", mFrontendCallback);
 }
 
@@ -29,7 +29,7 @@ void GuestController::forwardMessage(libivc_message_t *msg)
 {
     TRACE;
 
-    if(mRb) {    
+    if(mRb) {
         int bytesWritten = mRb->write((uint8_t*)msg, sizeof(*msg));
     }
 
@@ -40,7 +40,6 @@ void GuestController::forwardMessage(libivc_message_t *msg)
 
 void GuestController::processControlEvent()
 {
-    TRACE;
     libivc_message_t msg;
     int bytesRead = 0;
     memset(&msg, 0x00, sizeof(msg));
@@ -60,7 +59,7 @@ void GuestController::initializeGuest(grant_ref_t gref, evtchn_port_t port, int 
 
     if (feState != READY)
         return;
-  
+
     if(!mControlBuffer.get()) {
         mControlBuffer = std::make_shared<XenBackend::XenGnttabBuffer>(mDomid, gref, PROT_READ|PROT_WRITE);
     }
@@ -68,14 +67,14 @@ void GuestController::initializeGuest(grant_ref_t gref, evtchn_port_t port, int 
     if (!ringbuffer) {
         mRb = std::make_shared<ringbuf>((uint8_t*) mControlBuffer->get(), 4096);
     }
-  
+
     if(!mControlEvent.get()) {
         QTimer *checkMessages = new QTimer();
-        QObject::connect(checkMessages, SIGNAL(timeout()), this, SIGNAL(controlEventReady()));
+        QObject::connect(checkMessages, SIGNAL(timeout()), this, SIGNAL(controlEventReady()), Qt::QueuedConnection);
         checkMessages->start(1000);
         mControlEvent = std::make_shared<XenBackend::XenEvtchn>(mDomid,
                                                                 port,
-                                                                [this]{ LOG(mLog, INFO) << " GOT AN EVENT --- YEEEEEW!"; QTimer::singleShot(250, this, SLOT(processControlEvent())); },
+                                                                [this]{ LOG(mLog, INFO) << " GOT AN EVENT --- YEEEEEW!"; QTimer::singleShot(250, this, SLOT(processControlEvent(), Qt::QueuedConnection)); },
                                                                 [this](const std::exception& e) {
                                                                     LOG(mLog, ERROR) << e.what();
                                                                 });
@@ -108,7 +107,7 @@ void GuestController::frontendCallback(const std::string &path)
     if(mXs.checkIfExist(path + "/" + "backend-status")) {
         beState = mXs.readUint(path + "/" + "backend-status");
     }
-  
+
     if (gref && port && feState == READY && beState != CONNECTED) {
         emit guestReady(gref, port, feState);
     }
