@@ -74,7 +74,7 @@ void GuestController::initializeGuest(grant_ref_t gref, evtchn_port_t port, int 
         checkMessages->start(1000);
         mControlEvent = std::make_shared<XenBackend::XenEvtchn>(mDomid,
                                                                 port,
-                                                                [this]{ LOG(mLog, INFO) << " GOT AN EVENT --- YEEEEEW!"; QTimer::singleShot(250, this, SLOT(processControlEvent(), Qt::QueuedConnection)); },
+                                                                [this]{ LOG(mLog, INFO) << " GOT AN EVENT --- YEEEEEW!"; QTimer::singleShot(250, this, SLOT(processControlEvent()), Qt::QueuedConnection); },
                                                                 [this](const std::exception& e) {
                                                                     LOG(mLog, ERROR) << e.what();
                                                                 });
@@ -121,4 +121,4 @@ void GuestController::frontendCallback(const std::string &path)
  * tab-width: 4
  * indent-tabs-mode: nil
  * End:
- */  
+ */
