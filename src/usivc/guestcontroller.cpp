@@ -31,6 +31,7 @@ void GuestController::forwardMessage(libivc_message_t *msg)
 
     if(mRb) {
         int bytesWritten = mRb->write((uint8_t*)msg, sizeof(*msg));
+        (void) bytesWritten;
     }
 
     if(mControlEvent) {
@@ -74,7 +75,7 @@ void GuestController::initializeGuest(grant_ref_t gref, evtchn_port_t port, int 
         checkMessages->start(1000);
         mControlEvent = std::make_shared<XenBackend::XenEvtchn>(mDomid,
                                                                 port,
-                                                                [this]{ LOG(mLog, INFO) << " GOT AN EVENT --- YEEEEEW!"; QTimer::singleShot(250, this, SLOT(processControlEvent()), Qt::QueuedConnection); },
+                                                                [this]{ LOG(mLog, INFO) << " GOT AN EVENT --- YEEEEEW!"; QTimer::singleShot(250, this, SLOT(processControlEvent())); },
                                                                 [this](const std::exception& e) {
                                                                     LOG(mLog, ERROR) << e.what();
                                                                 });
