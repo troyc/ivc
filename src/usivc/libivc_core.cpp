@@ -126,7 +126,7 @@ libivc_core::ivcAvailableSpace(struct libivc_client *client, size_t *dataSize) {
     ivcClient *c = (ivcClient *)client->context;
     *dataSize = c->availableSpace();
     return 0;
-}   
+}
 
 void
 libivc_core::sendResponse(libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status)
@@ -144,11 +144,9 @@ libivc_core::sendResponse(libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t st
 
 void
 libivc_core::handleConnectMessage(libivc_message_t *msg) {
-    std::lock_guard<std::mutex> lock(mServerLock);
-        
     if(!msg)
         return;
-  
+
     if(msg->to_dom != 0)
         return;
 
@@ -252,6 +250,7 @@ libivc_core::registerServer(uint16_t port,
 
 void
 libivc_core::shutdownServer(struct libivc_server *server) {
+    std::lock_guard<std::mutex> lock(mServerLock);
     uint32_t key = (uint32_t)(((uintptr_t)server) & 0x00000000FFFFFFFFF);
     mCallbackMap[key] = nullptr;
     mCallbackArgumentMap[key] = nullptr;
