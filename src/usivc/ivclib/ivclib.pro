@@ -11,11 +11,13 @@ SOURCES += ../libivc.cpp
 SOURCES += ../libivc_core.cpp
 SOURCES += ../ivc_client.cpp
 SOURCES += ../event_controller.cpp
+SOURCES += ../../data-structures/ringbuffer.c
 
 HEADERS += ../../../include/core/libivc.h
 HEADERS += ../libivc_core.h
 HEADERS += ../ivc_client.h
 HEADERS += ../event_controller.h
+HEADERS += ../../data-structures/ringbuffer.h
 
 INCLUDEPATH += "../../../include/core"
 INCLUDEPATH += "../../data-structures"
