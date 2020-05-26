@@ -24,3 +24,10 @@ LIBS += -lxenbe
 
 target.path = /usr/lib
 INSTALLS += target
+
+headers.path = /usr/include
+headers.files = \
+	../../../include/core/libivc.h \
+	../../../include/core/libivc_types.h \
+	../../../include/core/libivc_debug.h
+INSTALLS += headers
