@@ -198,11 +198,7 @@ ks_ivc_core_uninit(void)
     int rc = SUCCESS;
     char path[IVC_MAX_PATH];
 #ifdef __linux
-    if (xen_initial_domain()) 
-    {
-        xenback_teardown();
-    } 
-    else 
+    if (!xen_initial_domain())
     {
 #endif
         memset(path, '\0', IVC_MAX_PATH);
