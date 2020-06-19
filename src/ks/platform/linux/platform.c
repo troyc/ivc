@@ -1390,6 +1390,7 @@ ks_platform_mmap(struct file *filp, struct vm_area_struct *vma)
 {
     int rc = SUCCESS;
     int i, mapping_id;
+    mmap_info_t *mmap_info;
 
     //this shouldn't fail, but always check anyway....
     libivc_checkp(filp, -EINVAL);
@@ -1415,7 +1416,7 @@ ks_platform_mmap(struct file *filp, struct vm_area_struct *vma)
     vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
     // Find information about the relevant guest mapping.
-    mmap_info_t *mmap_info = __find_mmap_info_by_id(mapping_id);
+    mmap_info = __find_mmap_info_by_id(mapping_id);
 
     // if the mmap_info wasn't set, then we shouldn't be mmapping anything.
     libivc_checkp(mmap_info, -EINVAL);

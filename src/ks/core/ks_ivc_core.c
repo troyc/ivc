@@ -1231,7 +1231,7 @@ ks_ivc_check_for_equiv_client(uint16_t domid, uint16_t port, uint64_t conn_id, u
     client_info->server_side = server_side;
 
     if (ks_ivc_core_find_internal_client(client_info) != NULL) {
-        libivc_error("A client with remote_domid %d, port %d, and connection id %d already exists.",
+        libivc_error("A client with remote_domid %d, port %d, and connection id %lld already exists.",
                         domid, port, conn_id);
         libivc_error("Not accepting new connection.");
         ret = true;
