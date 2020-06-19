@@ -28,4 +28,4 @@ all:
 	$(MAKE) -C $(KDIR) M=$(IVC_BASE_DIR)/src
 
 modules_install:
-	$(MAKE) -C $(KDIR) M=$(IVC_BASE_DIR)/src
+	$(MAKE) -C $(KDIR) M=$(IVC_BASE_DIR)/src modules_install
