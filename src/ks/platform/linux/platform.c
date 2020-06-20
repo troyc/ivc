@@ -313,7 +313,7 @@ ks_platform_alloc_shared_mem(uint32_t numPages, uint16_t remoteDomId,
     if(numPages > 1)
     {
         memAlloc->kAddress = vmap(memAlloc->pages, memAlloc->numPages,
-                                  VM_READ | VM_WRITE | VM_SHARED, PAGE_SHARED);
+                                  VM_MAP, PAGE_KERNEL);
         libivc_checkp_goto(memAlloc->kAddress, ERROR);
     }
     // Otherwise, grab the kernel address for our single page directly.
