@@ -30,7 +30,6 @@ public:
     ~ivcClient();
 
     void eventCallback();
-    bool pendingCallback();
     void setClientEventCallback(std::function<void(void *, libivc_client *)> fn);
     void setClientDisconnectCallback(std::function<void(void *, libivc_client *)> fn);
     void setClientData(void *opaque);
@@ -48,11 +47,10 @@ private:
     std::function<void()> mEventCallback{nullptr};
     std::shared_ptr<ringbuf> mRingbuffer{nullptr};
 
-    bool mPendingCallback{false};
-    
     domid_t mDomid{0};
     evtchn_port_t mEvtchnPort{0};
-    
+
+    eventController &mEventController;
     XenBackend::Log mLog;
 };
 

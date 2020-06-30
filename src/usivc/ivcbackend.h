@@ -29,8 +29,6 @@ public slots:
 
   void addProcess();
 
-  void pollForEvents();
-  
   void processClientRequest(libivc_message_t msg);
   void processServerRequests();
  private:
@@ -45,7 +43,6 @@ public slots:
   QList<QLocalSocket *> mSockets;
 
   XenBackend::Log mLog;
-  QTimer *mTimer{nullptr};
 };
 
 #endif //IVCBACKEND__H

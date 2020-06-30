@@ -5,15 +5,14 @@ ivcClient::ivcClient(domid_t domid,
                      grant_ref_t *grefs,
                      uint32_t num_grants,
                      evtchn_port_t evtport,
-                     eventController &e) : mLog("libivc", LOGLEVEL) {
-    mDomid = domid;
-    mEvtchnPort = evtport;
-        
-    mEventCallback = std::function<void()>([&](){ eventCallback(); });
+                     eventController &e) : mDomid(domid),
+                                           mEvtchnPort(evtport),
+                                           mEventController(e),
+                                           mLog("libivc", LOGLEVEL) {
     XenBackend::XenGnttabBuffer interimBuffer(domid, grefs, 32);
-    mMappedBuffer = std::make_shared<XenBackend::XenGnttabBuffer>(domid, (grant_ref_t *)interimBuffer.get(), num_grants);
 
-    /* C interface */
+    mMappedBuffer = std::make_shared<XenBackend::XenGnttabBuffer>(domid, (grant_ref_t *)interimBuffer.get(), num_grants); 
+
     mClient = (struct libivc_client *)malloc(sizeof(struct libivc_client));
     memset((void*)mClient, 0x00, sizeof(struct libivc_client));
     mClient->context = (void*)this;
@@ -23,6 +22,8 @@ ivcClient::ivcClient(domid_t domid,
     mClient->port = port;
     mClient->event_channel = e.openEventChannel(domid, evtport, mEventCallback);
     mRingbuffer = std::make_shared<ringbuf>((uint8_t*)mClient->buffer, 4096 * num_grants, true);
+
+    mEventCallback = std::function<void()>([&](){ eventCallback(); });
 }
 
 ivcClient::~ivcClient() {
@@ -46,35 +47,23 @@ ivcClient::~ivcClient() {
 }
 
 void
-ivcClient::eventCallback() {
-    if (!mRingbuffer->bytesAvailableRead()) {
-        return;
-    }
-        
+ivcClient::eventCallback() {       
     if(mClient && mClientEventCallback) {
         mClientEventCallback(mClient->opaque, mClient);
-        mPendingCallback = false;
-    } else {
-        mPendingCallback = true;
     }
-}
-
-bool
-ivcClient::pendingCallback() {
-    return mPendingCallback;
 }
 
 #define RETRY_COUNT 5
     
 int
 ivcClient::recv(char *buf, uint32_t len) {
-    int rc = mRingbuffer->bytesAvailableRead();
-    int retry = 0;
-    while (rc < len && retry++ < RETRY_COUNT) {
-        rc = mRingbuffer->bytesAvailableRead();
-        usleep(250*1000);
+    int rc = 0;
+
+    if (!mRingbuffer) {
+        return -ENOENT;
     }
 
+    rc = mRingbuffer->bytesAvailableRead();
     if (rc < len) {
         return -ENODATA;
     }
@@ -87,7 +76,7 @@ ivcClient::recv(char *buf, uint32_t len) {
 int
 ivcClient::send(char *buf, uint32_t len) {
     int rc = mRingbuffer->write((uint8_t*)buf, len);
-        
+    mEventController.notify(mEvtchnPort);
     return rc;
 }
 

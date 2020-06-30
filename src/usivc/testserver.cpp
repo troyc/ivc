@@ -50,7 +50,7 @@ int main(int argc, const char *argv[])
   struct pv_display_consumer *display_consumer;
   struct pv_display_backend *display;
   
-  create_pv_display_consumer(&display_consumer, LIBIVC_DOMID_ANY, 1500, nullptr);
+  create_pv_display_consumer(&display_consumer, LIBIVC_DOMID_ANY, 1000, nullptr);
   display_consumer->set_driver_data(display_consumer, display_consumer);
   display_consumer->register_control_connection_handler(display_consumer, control_connection_cb);
   display_consumer->register_driver_capabilities_request_handler(display_consumer, capabilities_request_cb);

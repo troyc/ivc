@@ -69,7 +69,10 @@ static inline void dump_message(libivc_message_t *msg)
     std::cout << "IVC Port:     " << msg->port << '\n';
     std::cout << "Evtchn Port:  " << msg->event_channel << '\n';
     std::cout << "Num grants:   " << msg->num_grants << '\n';
-    std::cout << "Conn. id:     " << msg->connection_id << '\n';
+    std::cout << "Msg_start:   " << (void*)msg->msg_start << '\n';
+    std::cout << "Msg_end:   " << (void*)msg->msg_end << '\n';
+    
+//    std::cout << "Conn. id:     " << msg->connection_id << '\n';
 }
 
 static inline void dump_buf(uint32_t *buf, uint32_t len)
@@ -124,7 +127,7 @@ private:
     int mSock{-1};
     
     QMap<uint32_t, std::shared_ptr<ivcClient>> mClients;
-    QMap<uint32_t, libivc_client_connected> mCallbackMap;
+    QMap<uint32_t, void *> mCallbackMap;
     QMap<uint32_t, void *> mCallbackArgumentMap;
     FILE *mSockFp{nullptr};
 

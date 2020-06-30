@@ -11,6 +11,7 @@ SOURCES += ../ivcd.cpp
 SOURCES += ../ivcbackend.cpp
 SOURCES += ../guestmanager.cpp
 SOURCES += ../guestcontroller.cpp
+SOURCES += ../ringbuf.cpp
 SOURCES += ../../data-structures/ringbuffer.c
 
 HEADERS += ../ivcbackend.h

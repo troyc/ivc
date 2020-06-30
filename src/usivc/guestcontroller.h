@@ -73,10 +73,7 @@ private:
     std::shared_ptr<XenBackend::XenEvtchn> mControlEvent{nullptr};
     XenBackend::XenEvtchn::Callback mControlCallback;
     XenBackend::Log mLog;
-
-    struct ringbuffer_t *ringbuffer{nullptr};
 };
-#endif //GUESTCONTROLLER__H
 /*
  * Local variables:
  * mode: C++
@@ -86,3 +83,4 @@ private:
  * indent-tabs-mode: nil
  * End:
  */
+#endif //GUESTCONTROLLER__H

@@ -77,10 +77,6 @@ libivc_core::ivcRegisterCallbacks(struct libivc_client *client,
     c->setClientDisconnectCallback(disconnectCallback);
     c->setClientData(opaque);
 
-    if(c->pendingCallback()) {
-        c->eventCallback();
-    }
-
     return 0;
 }
 
@@ -161,8 +157,9 @@ libivc_core::handleConnectMessage(libivc_message_t *msg) {
                                                     msg->num_grants,
                                                     msg->event_channel);
         if (client) {
-            mCallbackMap[key](mCallbackArgumentMap[key], client);
+            libivc_client_connected cb = (libivc_client_connected)mCallbackMap[key];
             sendResponse(msg, ACK, 0);
+            cb(mCallbackArgumentMap[key], client);
             return;
         }
     }
@@ -174,8 +171,9 @@ libivc_core::handleConnectMessage(libivc_message_t *msg) {
                                                     msg->num_grants,
                                                     msg->event_channel);
         if (client) {
-            mCallbackMap[anykey](mCallbackArgumentMap[anykey], client);
+            libivc_client_connected cb = (libivc_client_connected)mCallbackMap[anykey];
             sendResponse(msg, ACK, 0);
+            cb(mCallbackArgumentMap[anykey], client);
             return;
         }
     }
@@ -194,39 +192,33 @@ libivc_core::handleDisconnectMessage(libivc_message_t *msg) {
 void
 libivc_core::monitorCommands()
 {
-    struct pollfd fd;
-    memset(&fd, 0x00, sizeof(fd));
-    int ret = 0;
+    struct pollfd pfd = {};
 
-    fd.fd = mSock;
-    fd.events = POLLIN;
-    while(poll(&fd, 1, -1)) {
-        libivc_message_t msg{0};
+    pfd.fd = mSock;
+    pfd.events = POLLIN;
+    while (poll(&pfd, 1, -1)) {
+        libivc_message_t msg = {};
 
-        if(fd.revents & POLLIN) {
-            read((char *)&msg, sizeof(msg));
-            switch(msg.type) {
-            case CONNECT:
-            {
-                handleConnectMessage(&msg);
-                break;
-            }
-            case DISCONNECT:
-            {
-                handleDisconnectMessage(&msg);
-                break;
-            }
-            case NOTIFY_ON_DEATH:
-            {
-                for(auto &client : mClients) {
-                    client->eventCallback();
+        if (pfd.revents & POLLIN) {
+            this->read((char*)&msg, sizeof(msg));
+            switch (msg.type) {
+                case CONNECT: {
+                    handleConnectMessage(&msg);
+                    break;
+                }
+                case DISCONNECT: {
+                    handleDisconnectMessage(&msg);
+                    break;
+                }
+                case NOTIFY_ON_DEATH: {
+                    for(auto &client : mClients) {
+                        client->eventCallback();
+                    }
+                    break;
                 }
                 break;
-            }
             default:
-            {
                 break;
-            }
             }
         }
     }
@@ -241,8 +233,8 @@ libivc_core::registerServer(uint16_t port,
     std::lock_guard<std::mutex> lock(mServerLock);
 
     uint32_t key = dom_port_key(domid, port);
-    LOG(mLog, DEBUG) << "Domid: " << domid << " Port: " << port << " Client id: " << client_id << " Key: " << key;
-    mCallbackMap[key] = cb;
+    LOG(mLog, DEBUG) << "Domid: " << domid << "\nPort: " << port << "\nClient id: " << client_id << "\nKey: " << key << "\ncb: " <<  (void*)cb << "\nopaque: " << opaque;
+    mCallbackMap[key] = (void *)cb;
     mCallbackArgumentMap[key] = opaque;
 
     return (struct libivc_server *)key;
