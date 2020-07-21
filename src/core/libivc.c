@@ -389,7 +389,7 @@ EXPORT_SYMBOL(libivc_put_client);
  */
 static void * outgoing_channel_for(struct libivc_client *client)
 {
-    size_t channel_number = client->server_side ? SERVER_TO_CLIENT_CHNANEL : CLIENT_TO_SERVER_CHANNEL;
+    size_t channel_number = client->server_side ? SERVER_TO_CLIENT_CHANNEL : CLIENT_TO_SERVER_CHANNEL;
     return &client->ringbuffer->channels[channel_number];
 }
 
@@ -399,7 +399,7 @@ static void * outgoing_channel_for(struct libivc_client *client)
  */
 static void * incoming_channel_for(struct libivc_client *client)
 {
-    size_t channel_number = client->server_side ? CLIENT_TO_SERVER_CHANNEL : SERVER_TO_CLIENT_CHNANEL;
+    size_t channel_number = client->server_side ? CLIENT_TO_SERVER_CHANNEL : SERVER_TO_CLIENT_CHANNEL;
     return &client->ringbuffer->channels[channel_number];
 }
 

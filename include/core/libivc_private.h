@@ -194,7 +194,7 @@ typedef struct grant_share_descriptor {
 #define CLIENT_SIDE_TX_EVENT_FLAG 0x01
 
 #define CLIENT_TO_SERVER_CHANNEL 0
-#define SERVER_TO_CLIENT_CHNANEL 1
+#define SERVER_TO_CLIENT_CHANNEL 1
 
 #pragma pack(push,1)
 

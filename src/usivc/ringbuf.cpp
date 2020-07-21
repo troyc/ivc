@@ -4,7 +4,7 @@ ringbuf::ringbuf(uint8_t *buf, uint64_t len, bool server)
 {
   int rc = 0;
 
-  mWriteChannel = server ? SERVER_TO_CLIENT_CHNANEL : CLIENT_TO_SERVER_CHANNEL;
+  mWriteChannel = server ? SERVER_TO_CLIENT_CHANNEL : CLIENT_TO_SERVER_CHANNEL;
   mReadChannel = server ? CLIENT_TO_SERVER_CHANNEL : SERVER_TO_CLIENT_CHANNEL;
   
   memset((void*)&mRb, 0x00, sizeof(ringbuffer_t));
