@@ -1,0 +1,22 @@
+obj-m += ivc.o
+
+ivc-y := \
+	ks/platform/linux/platform.o \
+	ks/platform/linux/compatibility.o \
+	data-structures/ringbuffer.o \
+	core/libivc_debug.o \
+	core/libivc.o \
+	ks/core/ks_ivc_core.o
+
+# headers from out-of-tree dependencies.
+ccflags-y := \
+	-I$(src)/../include \
+	-I$(src)/../include/core \
+	-I$(src)/../include/ks \
+	-I$(src)/../include/ks/platform/linux \
+	-I$(src)/../include/us \
+	-I$(src)/../include/us/platform \
+	-I$(src)/../include/us/platform/linux \
+	-I$(src)/data-structures
+
+ccflags-y += -fno-omit-frame-pointer -DKERNEL

@@ -1,31 +1,27 @@
-ifndef KDIR
-$(error KDIR is not set)
-endif
+ifneq ($(KERNELRELEASE),)
+# kbuild part of makefile
+include Kbuild
 
-obj-m := ivc.o
-ivc-y := ks/platform/linux/platform.o
-ivc-y += ks/platform/linux/compatibility.o
-ivc-y += data-structures/ringbuffer.o
-ivc-y += core/libivc_debug.o
-ivc-y += core/libivc.o
-ivc-y += ks/core/ks_ivc_core.o
+else
+# normal makefile
+KERNEL_VERSION ?= `uname -r`
+KERNEL_SRC ?= /lib/modules/$(KERNEL_VERSION)/build
+INSTALL_HDR_PATH ?= /usr/src/ivc
 
-ccflags-y := -I$(IVC_BASE_DIR)/include
-ccflags-y += -I$(IVC_BASE_DIR)/include/core
-ccflags-y += -I$(IVC_BASE_DIR)/include/ks
-ccflags-y += -I$(IVC_BASE_DIR)/include/ks/platform/linux
-ccflags-y += -I$(IVC_BASE_DIR)/include/us
-ccflags-y += -I$(IVC_BASE_DIR)/include/us/platform
-ccflags-y += -I$(IVC_BASE_DIR)/include/us/platform/linux
-ccflags-y += -I$(IVC_BASE_DIR)/src/data-structures
-ccflags-y += -DKERNEL -Wall -D__KERNEL__ -DMODULE -g -fno-omit-frame-pointer -ftree-ter
+default:
+	$(MAKE) -C $(KERNEL_SRC) M=$$PWD
 
-ifeq (Release, ${IVC_PRODUCTION})
-   ccflags-y += -O3 -DNDEBUG
-endif
-
-all: 
-	$(MAKE) -C $(KDIR) M=$(IVC_BASE_DIR)/src
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$$PWD clean
 
 modules_install:
-	$(MAKE) -C $(KDIR) M=$(IVC_BASE_DIR)/src modules_install
+	$(MAKE) -C $(KERNEL_SRC) M=$$PWD modules_install
+
+headers_install:
+	install -d $(INSTALL_HDR_PATH)/include
+	install -m 0644 ../include/core/libivc_debug.h $(INSTALL_HDR_PATH)/include/libivc_debug.h
+	install -m 0644 ../include/core/libivc.h $(INSTALL_HDR_PATH)/include/libivc.h
+	install -m 0644 ../include/core/libivc_private.h $(INSTALL_HDR_PATH)/include/libivc_private.h
+	install -m 0644 ../include/core/libivc_types.h $(INSTALL_HDR_PATH)/include/libivc_types.h
+
+endif
