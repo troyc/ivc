@@ -71,7 +71,6 @@ void GuestController::processControlEvent()
 
 void GuestController::initializeGuest(grant_ref_t gref, evtchn_port_t port, int feState)
 {
-    libivc_message_t rsp;
     mControlGref = gref;
     mControlPort = port;
 

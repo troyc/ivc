@@ -69,9 +69,9 @@ static inline void dump_message(libivc_message_t *msg)
     std::cout << "IVC Port:     " << msg->port << '\n';
     std::cout << "Evtchn Port:  " << msg->event_channel << '\n';
     std::cout << "Num grants:   " << msg->num_grants << '\n';
-    std::cout << "Msg_start:   " << (void*)msg->msg_start << '\n';
-    std::cout << "Msg_end:   " << (void*)msg->msg_end << '\n';
-    
+    std::cout << "Msg_start:    " << (intptr_t)msg->msg_start << '\n';
+    std::cout << "Msg_end:      " << (intptr_t)msg->msg_end << '\n';
+
 //    std::cout << "Conn. id:     " << msg->connection_id << '\n';
 }
 
