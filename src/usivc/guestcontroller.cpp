@@ -80,7 +80,7 @@ void GuestController::initializeGuest(grant_ref_t gref, evtchn_port_t port, int 
     if(!mControlGref) {
         return;
     }
-    
+
     if(!mControlBuffer.get()) {
         mControlBuffer = std::make_shared<XenBackend::XenGnttabBuffer>(mDomid, mControlGref, PROT_READ|PROT_WRITE);
     }

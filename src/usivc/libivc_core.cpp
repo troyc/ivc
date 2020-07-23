@@ -71,7 +71,7 @@ libivc_core::ivcRegisterCallbacks(struct libivc_client *client,
     if (!client || !client->context) {
         return -ENOENT;
     }
-    
+
     ivcClient *c = (ivcClient *)client->context;
     c->setClientEventCallback(eventCallback);
     c->setClientDisconnectCallback(disconnectCallback);
@@ -85,7 +85,7 @@ libivc_core::ivcRecv(struct libivc_client *client, char *dest, size_t destSize) 
     if (!client || !client->context) {
         return -ENOENT;
     }
-    
+
     ivcClient *c = (ivcClient *)client->context;
     return c->recv(dest, destSize);
 }
@@ -285,4 +285,4 @@ libivc_core::dom_port_key(uint16_t domid, uint16_t port) {
  * tab-width: 4
  * indent-tabs-mode: nil
  * End:
- */  
+ */

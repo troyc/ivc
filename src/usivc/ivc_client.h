@@ -33,12 +33,12 @@ public:
     void setClientEventCallback(std::function<void(void *, libivc_client *)> fn);
     void setClientDisconnectCallback(std::function<void(void *, libivc_client *)> fn);
     void setClientData(void *opaque);
-    
+
     int recv(char *buf, uint32_t len);
     int send(char *buf, uint32_t len);
     int availableData();
     int availableSpace();
-    struct libivc_client *client();           
+    struct libivc_client *client();
 private:
     std::shared_ptr<XenBackend::XenGnttabBuffer> mMappedBuffer{nullptr};
     struct libivc_client *mClient{nullptr};
@@ -62,5 +62,5 @@ private:
  * tab-width: 4
  * indent-tabs-mode: nil
  * End:
- */  
+ */
 #endif // IVC_CLIENT__H

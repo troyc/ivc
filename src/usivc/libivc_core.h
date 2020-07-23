@@ -63,7 +63,7 @@ static inline void dump_message(libivc_message_t *msg)
         break;
     }
     }
-  
+
     std::cout << "Source domid: " << msg->from_dom << '\n';
     std::cout << "Dest domid:   " << msg->to_dom << '\n';
     std::cout << "IVC Port:     " << msg->port << '\n';
@@ -92,7 +92,7 @@ public:
     libivc_core();
     virtual ~libivc_core();
 
-    void destroyClient(struct libivc_client *client);    
+    void destroyClient(struct libivc_client *client);
     struct libivc_client *createClient(domid_t domid,
                                        uint16_t port,
                                        grant_ref_t *grefs,
@@ -107,8 +107,8 @@ public:
     int ivcSend(struct libivc_client *client, char *dest, size_t destSize);
     int ivcAvailableData(struct libivc_client *client, size_t *dataSize);
     int ivcAvailableSpace(struct libivc_client *client, size_t *dataSize);
-    
-    void sendResponse(libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status);    
+
+    void sendResponse(libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status);
     void handleConnectMessage(libivc_message_t *msg);
     void handleDisconnectMessage(libivc_message_t *msg);
     void monitorCommands();
@@ -118,14 +118,14 @@ public:
                                          libivc_client_connected cb,
                                          void *opaque);
     void shutdownServer(struct libivc_server *server);
-    struct libivc_server *findServer(domid_t domid, uint16_t port);    
+    struct libivc_server *findServer(domid_t domid, uint16_t port);
     void read(char *msg, uint32_t size);
-    void write(void *buf, uint32_t size);  
+    void write(void *buf, uint32_t size);
 private:
     uint32_t dom_port_key(uint16_t domid, uint16_t port);
-    
+
     int mSock{-1};
-    
+
     QMap<uint32_t, std::shared_ptr<ivcClient>> mClients;
     QMap<uint32_t, void *> mCallbackMap;
     QMap<uint32_t, void *> mCallbackArgumentMap;
@@ -146,5 +146,5 @@ private:
  * tab-width: 4
  * indent-tabs-mode: nil
  * End:
- */  
+ */
 #endif

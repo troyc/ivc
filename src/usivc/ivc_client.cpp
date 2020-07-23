@@ -11,7 +11,7 @@ ivcClient::ivcClient(domid_t domid,
                                            mLog("libivc", LOGLEVEL) {
     XenBackend::XenGnttabBuffer interimBuffer(domid, grefs, 32);
 
-    mMappedBuffer = std::make_shared<XenBackend::XenGnttabBuffer>(domid, (grant_ref_t *)interimBuffer.get(), num_grants); 
+    mMappedBuffer = std::make_shared<XenBackend::XenGnttabBuffer>(domid, (grant_ref_t *)interimBuffer.get(), num_grants);
 
     mClient = (struct libivc_client *)malloc(sizeof(struct libivc_client));
     memset((void*)mClient, 0x00, sizeof(struct libivc_client));
@@ -31,7 +31,7 @@ ivcClient::~ivcClient() {
     if(mRingbuffer.use_count()) {
         LOG(mLog, ERROR) << "BUG: mRingbuffer has open references.\n";
     }
-        
+
     mEventCallback = nullptr;
 
     mClient->port = 0;
@@ -47,14 +47,14 @@ ivcClient::~ivcClient() {
 }
 
 void
-ivcClient::eventCallback() {       
+ivcClient::eventCallback() {
     if(mClient && mClientEventCallback) {
         mClientEventCallback(mClient->opaque, mClient);
     }
 }
 
 #define RETRY_COUNT 5
-    
+
 int
 ivcClient::recv(char *buf, uint32_t len) {
     int rc = 0;
@@ -67,7 +67,7 @@ ivcClient::recv(char *buf, uint32_t len) {
     if (rc < len) {
         return -ENODATA;
     }
-        
+
     rc = mRingbuffer->read((uint8_t*)buf, len);
 
     return len == rc ? 0 : -ENODATA;
@@ -77,6 +77,7 @@ int
 ivcClient::send(char *buf, uint32_t len) {
     int rc = mRingbuffer->write((uint8_t*)buf, len);
     mEventController.notify(mEvtchnPort);
+
     return rc;
 }
 
@@ -118,4 +119,4 @@ ivcClient::client() {
  * tab-width: 4
  * indent-tabs-mode: nil
  * End:
- */  
+ */

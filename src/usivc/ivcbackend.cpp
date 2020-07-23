@@ -51,8 +51,8 @@ void IvcBackend::processServerRequests()
 {
     for(auto &sock : mSockets) {
         libivc_message_t msg;
-        memset(&msg, 0x00, sizeof(msg));
-        if(sock->bytesAvailable() >= sizeof(msg)) {
+        memset(&msg, 0x00, (ssize_t)sizeof(msg));
+        if(sock->bytesAvailable() >= (qint64)sizeof(msg)) {
             sock->read((char *)&msg, sizeof(msg));
             if(mGuestControllers[msg.to_dom]) {
                 mGuestControllers[msg.to_dom]->forwardMessage(&msg);
