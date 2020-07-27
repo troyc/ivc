@@ -129,7 +129,6 @@ private:
     QMap<uint32_t, std::shared_ptr<ivcClient>> mClients;
     QMap<uint32_t, void *> mCallbackMap;
     QMap<uint32_t, void *> mCallbackArgumentMap;
-    FILE *mSockFp{nullptr};
 
     std::thread *mMonitor{nullptr};
     std::mutex mServerLock;

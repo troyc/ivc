@@ -17,12 +17,6 @@ libivc_core::libivc_core() : mLog("libivc_core", LOGLEVEL) {
     if(res) {
         throw std::system_error(errno, std::generic_category(), "Failed to connect socket");
     }
-
-    mSockFp = fdopen(mSock, "w+");
-    if (!mSockFp) {
-        throw std::system_error(errno, std::generic_category(), "Failed to create file pointer to socket");
-    }
-
     mMonitor = new std::thread(&libivc_core::monitorCommands, this);
 }
 
@@ -268,7 +262,6 @@ void
 libivc_core::write(void *buf, uint32_t size) {
     std::lock_guard<std::mutex> lock(mClientLock);
     ::write(mSock, (const char*)buf, size);
-    ::fflush(mSockFp);
 }
 
 uint32_t
