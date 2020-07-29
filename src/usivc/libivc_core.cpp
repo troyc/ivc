@@ -122,7 +122,7 @@ void
 libivc_core::sendResponse(libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status)
 {
     // copy in the incoming message data to the response
-    libivc_message_t respMsg{0};
+    libivc_message_t respMsg;
     memcpy(&respMsg, msg, sizeof (libivc_message_t));
     respMsg.status = (uint8_t) status;
     respMsg.to_dom = msg->from_dom;
