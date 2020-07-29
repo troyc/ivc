@@ -179,8 +179,15 @@ libivc_core::handleConnectMessage(libivc_message_t *msg) {
 
 void
 libivc_core::handleDisconnectMessage(libivc_message_t *msg) {
-    uint32_t key = dom_port_key(msg->from_dom, msg->port);
-    destroyClient(mClients[key]->client());
+    uint32_t key;
+
+    key = dom_port_key(msg->from_dom, msg->port);
+    if (mClients.contains(key)) {
+        auto client = mClients[key]->client();
+
+        if (client)
+            destroyClient(client);
+    }
 }
 
 void
