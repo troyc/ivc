@@ -20,10 +20,11 @@ ivcClient::ivcClient(domid_t domid,
     mClient->num_pages = mMappedBuffer->size()/4096;
     mClient->remote_domid = domid;
     mClient->port = port;
+    mEventCallback = std::function<void()>([&](){ eventCallback(); });
     mClient->event_channel = e.openEventChannel(domid, evtport, mEventCallback);
     mRingbuffer = std::make_shared<ringbuf>((uint8_t*)mClient->buffer, 4096 * num_grants, true);
 
-    mEventCallback = std::function<void()>([&](){ eventCallback(); });
+    LOG(mLog, DEBUG) << "New client: " << "dom" << domid << ":" << port << "evtchn:" << evtport << "(" << mClient->event_channel << ")";
 }
 
 ivcClient::~ivcClient() {
@@ -76,7 +77,8 @@ ivcClient::recv(char *buf, uint32_t len) {
 int
 ivcClient::send(char *buf, uint32_t len) {
     int rc = mRingbuffer->write((uint8_t*)buf, len);
-    mEventController.notify(mEvtchnPort);
+    LOG(mLog, DEBUG) << "ivcClient::send: send notification to event-channel: " << mClient->event_channel << "(" << mEvtchnPort << ")";
+    mEventController.notify(mClient->event_channel);
 
     return rc;
 }
