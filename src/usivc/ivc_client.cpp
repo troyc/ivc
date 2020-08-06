@@ -57,7 +57,7 @@ ivcClient::eventCallback() {
 
 int
 ivcClient::recv(char *buf, uint32_t len) {
-    int rc = 0;
+    unsigned int rc = 0;
 
     if (!mRingbuffer) {
         return -ENOENT;

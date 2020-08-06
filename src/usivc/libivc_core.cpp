@@ -46,9 +46,13 @@ libivc_core::createClient(domid_t domid,
                                                     evtport,
                                                     mEventController);
         return mClients[key]->client();
+    } catch (std::exception &e) {
+        LOG(mLog, ERROR) << "Failed to create new IVC Client: " << e.what();
     } catch (...) {
-        return nullptr;
+        LOG(mLog, ERROR) << "Failed to create new IVC Client: Unknown exception.";
     }
+
+    return nullptr;
 }
 
 void
