@@ -1,23 +1,7 @@
 #include "libivc_core.h"
 
 libivc_core::libivc_core() : mLog("libivc_core", LOGLEVEL) {
-    struct sockaddr_un address;
-    mSock = ::socket(AF_UNIX, SOCK_STREAM, 0);
-    if(mSock < 0) {
-        throw std::system_error(errno, std::generic_category(), "Failed to create socket");
-    }
-
-    const char *path = "/tmp/ivc_control";
-
-    memset(&address, 0x00, sizeof(address));
-    address.sun_family = AF_UNIX;
-    ::strncpy((char*)&address.sun_path, path, 107);
-
-    int res = ::connect(mSock, (struct sockaddr *)&address, sizeof(address));
-    if(res) {
-        throw std::system_error(errno, std::generic_category(), "Failed to connect socket");
-    }
-    mMonitor = new std::thread(&libivc_core::monitorCommands, this);
+    mMonitor = new std::thread(&libivc_core::daemonMonitor, this);
 }
 
 libivc_core::~libivc_core() {
@@ -122,7 +106,7 @@ libivc_core::ivcAvailableSpace(struct libivc_client *client, size_t *dataSize) {
     return 0;
 }
 
-void
+int
 libivc_core::sendResponse(const libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status)
 {
     // copy in the incoming message data to the response
@@ -133,20 +117,18 @@ libivc_core::sendResponse(const libivc_message_t *msg, MESSAGE_TYPE_T type, uint
     respMsg.from_dom = (uint16_t) msg->to_dom;
     respMsg.type = type;
 
-    write((void *)&respMsg, sizeof(respMsg));
+    return this->daemonSend(&respMsg, sizeof (respMsg));
 }
 
-void
+int
 libivc_core::handleConnectMessage(const libivc_message_t *msg)
 {
-    if(!msg)
-        return;
-
-    if(msg->to_dom != 0)
-        return;
+    if(!msg || (msg->to_dom != 0))
+        return -EINVAL;
 
     uint32_t key = dom_port_key(msg->from_dom, msg->port);
     uint32_t anykey = dom_port_key(LIBIVC_DOMID_ANY, msg->port);
+    int rc;
 
     // Have to provide a connected client here...
     if(mCallbackMap.contains(key)) {
@@ -157,9 +139,9 @@ libivc_core::handleConnectMessage(const libivc_message_t *msg)
                                                     msg->event_channel);
         if (client) {
             libivc_client_connected cb = (libivc_client_connected)mCallbackMap[key];
-            sendResponse(msg, ACK, 0);
+            rc = sendResponse(msg, ACK, 0);
             cb(mCallbackArgumentMap[key], client);
-            return;
+            return rc;
         }
     }
 
@@ -171,15 +153,14 @@ libivc_core::handleConnectMessage(const libivc_message_t *msg)
                                                     msg->event_channel);
         if (client) {
             libivc_client_connected cb = (libivc_client_connected)mCallbackMap[anykey];
-            sendResponse(msg, ACK, 0);
+            rc = sendResponse(msg, ACK, 0);
             cb(mCallbackArgumentMap[anykey], client);
-            return;
+            return rc;
         }
     }
+    LOG(mLog, INFO) << "Connect call with no listening servers";
 
-    sendResponse(msg, ACK, -ECONNREFUSED);
-
-    LOG(mLog, INFO) << "Connect call with no listening servers\n";
+    return sendResponse(msg, ACK, -ECONNREFUSED);
 }
 
 void
@@ -196,38 +177,154 @@ libivc_core::handleDisconnectMessage(const libivc_message_t *msg) {
 }
 
 void
-libivc_core::monitorCommands()
+libivc_core::daemonDisconnect()
 {
-    struct pollfd pfd = {};
+    int rc;
 
-    pfd.fd = mSock;
-    pfd.events = POLLIN;
-    while (poll(&pfd, 1, -1)) {
-        libivc_message_t msg = {};
+    if (mSock < 0)
+        return;
 
-        if (pfd.revents & POLLIN) {
-            this->read((char*)&msg, sizeof(msg));
-            switch (msg.type) {
-                case CONNECT: {
-                    handleConnectMessage(&msg);
-                    break;
-                }
-                case DISCONNECT: {
-                    handleDisconnectMessage(&msg);
-                    break;
-                }
-                case NOTIFY_ON_DEATH: {
-                    for(auto &client : mClients) {
-                        client->eventCallback();
-                    }
-                    break;
-                }
-                break;
-            default:
+    do {
+        rc = ::close(mSock);
+        if (rc < 0 && errno == EINTR)
+            // Retry on EINTR only.
+            // Other errors are not recoverable.
+            continue;
+        break;
+    } while (1);
+
+    mSock = -1;
+}
+
+int
+libivc_core::daemonConnect(const char *path)
+{
+    struct sockaddr_un un = {
+        .sun_family = AF_UNIX,
+        {}
+    };
+    int rc = 0;
+
+    this->daemonDisconnect();
+
+    mSock = ::socket(AF_UNIX, SOCK_STREAM, 0);
+    if (mSock < 0)
+        return -errno;
+
+    ::strncpy(reinterpret_cast<char*>(&un.sun_path), path, sizeof (un.sun_path));
+    if (::connect(mSock, reinterpret_cast<struct sockaddr *>(&un), sizeof (un)) < 0) {
+        rc = -errno;
+        this->daemonDisconnect();
+    }
+
+    return rc;
+}
+
+int libivc_core::daemonPoll()
+{
+    struct pollfd pfd = {
+        .fd = mSock,
+        .events = POLLIN,
+        {}
+    };
+    int rc;
+
+    rc = poll(&pfd, 1, -1);
+    if (rc < 0)
+        return -errno;
+    if (rc == 0)
+        return 0;
+    if (pfd.revents != POLLIN)
+        return -EIO;
+
+    return rc;
+}
+
+ssize_t libivc_core::daemonRecv(void *msg, size_t size)
+{
+    std::lock_guard<std::mutex> lock(mClientLock);
+    ssize_t rc;
+
+    rc = ::recv(mSock, msg, size, 0);
+    if (rc < 0)
+        return -errno;
+    if (rc == 0)
+        return 0;
+    if (rc != static_cast<ssize_t>(size))
+        return -EIO;
+
+    return rc;
+}
+
+ssize_t libivc_core::daemonSend(const void *msg, size_t size)
+{
+    std::lock_guard<std::mutex> lock(mClientLock);
+    ssize_t rc;
+
+    rc = ::send(mSock, msg, size, MSG_NOSIGNAL);
+    if (rc < 0)
+        return -errno;
+    if (rc == 0)
+        return 0;
+    if (rc != static_cast<ssize_t>(size))
+        return -EIO;
+
+    return rc;
+}
+
+int libivc_core::daemonProcessMessage(const libivc_message_t *msg)
+{
+    switch (msg->type) {
+    case CONNECT:
+        return handleConnectMessage(msg);
+    case DISCONNECT:
+        handleDisconnectMessage(msg);
+        return 0;
+    case NOTIFY_ON_DEATH:
+        for (auto &client : mClients)
+            client->eventCallback();
+        return 0;
+    default:
+        LOG(mLog, ERROR) << "Invalid message received from ivcDaemon (" << msg->type << ").";
+        break;
+    }
+
+    return -EINVAL;
+}
+
+void
+libivc_core::daemonMonitor()
+{
+    int rc;
+    std::chrono::seconds timeout(2);
+
+    do {
+        rc = this->daemonConnect("/tmp/ivc_control");
+        if (rc) {
+            // ivcDaemon unavailable, retry.
+            LOG(mLog, WARNING) << "Failed to connect to ivcDaemon(" << -rc << "). Retry in 2 seconds.";
+            std::this_thread::sleep_for(timeout);
+            continue;
+        }
+
+        do {
+            libivc_message_t msg = {};
+
+            rc = this->daemonRecv(&msg, sizeof (msg));
+            if (rc <= 0) {
+                // Error, incomplete msg, other-end closed.
+                LOG(mLog, WARNING) << "Protocol corruption with ivcDaemon (" << -rc << "). Reset connection.";
                 break;
             }
-        }
-    }
+
+            rc = this->daemonProcessMessage(&msg);
+            if (rc < 0) {
+                // Error, other-end closed, connection reset...
+                LOG(mLog, WARNING) << "Failed to send reply to ivcDaemon (" << -rc << "). Reset connection.";
+                break;
+            }
+        } while (1);
+    } while (1);
 }
 
 struct libivc_server *
@@ -262,18 +359,6 @@ libivc_core::findServer(domid_t domid, uint16_t port) {
     }
 
     return nullptr;
-}
-
-void
-libivc_core::read(char *msg, uint32_t size) {
-    std::lock_guard<std::mutex> lock(mClientLock);
-    ::read(mSock, msg, size);
-}
-
-void
-libivc_core::write(void *buf, uint32_t size) {
-    std::lock_guard<std::mutex> lock(mClientLock);
-    ::write(mSock, (const char*)buf, size);
 }
 
 uint32_t

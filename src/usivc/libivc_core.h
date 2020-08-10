@@ -5,6 +5,7 @@
 #include <QDebug>
 
 #include <thread>
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -24,6 +25,8 @@ extern "C" {
 #include <unistd.h>
 #include <stdio.h>
 #include <poll.h>
+#include <errno.h>
+#include <string.h>
 };
 
 #include "ringbuf.h"
@@ -108,10 +111,9 @@ public:
     int ivcAvailableData(struct libivc_client *client, size_t *dataSize);
     int ivcAvailableSpace(struct libivc_client *client, size_t *dataSize);
 
-    void sendResponse(const libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status);
-    void handleConnectMessage(const libivc_message_t *msg);
+    int sendResponse(const libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status);
+    int handleConnectMessage(const libivc_message_t *msg);
     void handleDisconnectMessage(const libivc_message_t *msg);
-    void monitorCommands();
     struct libivc_server *registerServer(uint16_t port,
                                          uint16_t domid,
                                          uint64_t client_id,
@@ -119,9 +121,15 @@ public:
                                          void *opaque);
     void shutdownServer(struct libivc_server *server);
     struct libivc_server *findServer(domid_t domid, uint16_t port);
-    void read(char *msg, uint32_t size);
-    void write(void *buf, uint32_t size);
 private:
+    void daemonDisconnect();
+    int daemonConnect(const char *path);
+    int daemonPoll();
+    ssize_t daemonRecv(void *msg, size_t size);
+    ssize_t daemonSend(const void *msg, size_t size);
+    int daemonProcessMessage(const libivc_message_t *msg);
+    void daemonMonitor();
+
     uint32_t dom_port_key(uint16_t domid, uint16_t port);
 
     int mSock{-1};
