@@ -18,6 +18,7 @@ int libivc_init()
 int libivc_clear_ringbuffer(struct libivc_client *client)
 {
   (void)client;
+  return 0;
 }
 
 int libivc_connect(struct libivc_client **ivc, uint16_t remote_dom_id, uint16_t remote_port, uint32_t numPages)
@@ -143,9 +144,14 @@ int libivc_remote_events_enabled(struct libivc_client *client, uint8_t *enabled)
 int libivc_send(struct libivc_client *ivc, char *src, size_t srcSize)
 {
   int rc = c->ivcSend(ivc, src, srcSize);
+  ssize_t size;
   //  c->notifyRemote(ivc);
 
-  return rc == srcSize ? 0 : -ENOSPC;
+  if (srcSize > SSIZE_MAX)
+      return -E2BIG;
+  size = static_cast<ssize_t>(srcSize);
+
+  return rc == size ? 0 : -ENOSPC;
 }
 int libivc_start_listening_server(struct libivc_server **server, uint16_t listening_port, uint16_t listen_for_domid, uint64_t listen_for_client_id, libivc_client_connected connectCallback, void *opaque)
 {
