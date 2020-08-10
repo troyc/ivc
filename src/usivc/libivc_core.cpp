@@ -33,7 +33,7 @@ libivc_core::destroyClient(struct libivc_client *client) {
 struct libivc_client *
 libivc_core::createClient(domid_t domid,
                           uint16_t port,
-                          grant_ref_t *grefs,
+                          const grant_ref_t *grefs,
                           uint32_t num_grants,
                           evtchn_port_t evtport) {
     uint32_t key = dom_port_key(domid, port);
@@ -123,7 +123,7 @@ libivc_core::ivcAvailableSpace(struct libivc_client *client, size_t *dataSize) {
 }
 
 void
-libivc_core::sendResponse(libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status)
+libivc_core::sendResponse(const libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status)
 {
     // copy in the incoming message data to the response
     libivc_message_t respMsg;
@@ -137,7 +137,8 @@ libivc_core::sendResponse(libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t st
 }
 
 void
-libivc_core::handleConnectMessage(libivc_message_t *msg) {
+libivc_core::handleConnectMessage(const libivc_message_t *msg)
+{
     if(!msg)
         return;
 
@@ -182,7 +183,7 @@ libivc_core::handleConnectMessage(libivc_message_t *msg) {
 }
 
 void
-libivc_core::handleDisconnectMessage(libivc_message_t *msg) {
+libivc_core::handleDisconnectMessage(const libivc_message_t *msg) {
     uint32_t key;
 
     key = dom_port_key(msg->from_dom, msg->port);

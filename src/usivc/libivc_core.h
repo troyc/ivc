@@ -95,7 +95,7 @@ public:
     void destroyClient(struct libivc_client *client);
     struct libivc_client *createClient(domid_t domid,
                                        uint16_t port,
-                                       grant_ref_t *grefs,
+                                       const grant_ref_t *grefs,
                                        uint32_t num_grants,
                                        evtchn_port_t evtport);
     void notifyRemote(struct libivc_client *client);
@@ -108,9 +108,9 @@ public:
     int ivcAvailableData(struct libivc_client *client, size_t *dataSize);
     int ivcAvailableSpace(struct libivc_client *client, size_t *dataSize);
 
-    void sendResponse(libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status);
-    void handleConnectMessage(libivc_message_t *msg);
-    void handleDisconnectMessage(libivc_message_t *msg);
+    void sendResponse(const libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status);
+    void handleConnectMessage(const libivc_message_t *msg);
+    void handleDisconnectMessage(const libivc_message_t *msg);
     void monitorCommands();
     struct libivc_server *registerServer(uint16_t port,
                                          uint16_t domid,

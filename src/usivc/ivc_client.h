@@ -23,7 +23,7 @@ class ivcClient {
 public:
     ivcClient(domid_t domid,
               uint16_t port,
-              grant_ref_t *grefs,
+              const grant_ref_t *grefs,
               uint32_t num_grants,
               evtchn_port_t evtport,
               eventController &e);
