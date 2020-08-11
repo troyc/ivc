@@ -23,9 +23,7 @@ GuestController::GuestController(XenBackend::XenStore &xs,
 GuestController::~GuestController()
 {
     TRACE;
-    if(mClearWatch) {
-        mXs.clearWatch(mXs.getDomainPath(mDomid) + "/data/ivc");
-    }
+    mXs.clearWatch(mXs.getDomainPath(mDomid) + "/data/ivc");
 }
 
 void GuestController::forwardMessage(libivc_message_t *msg)

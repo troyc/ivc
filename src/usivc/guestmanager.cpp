@@ -9,10 +9,7 @@ GuestManager::GuestManager(XenBackend::XenStore &xs) : mXs(xs)
 }
 
 GuestManager::~GuestManager()
-{
-  mXs.stop();
-  mXs.clearWatches();
-}
+{ }
 
 bool GuestManager::containsDomain(const std::vector<domid_t> &domList, domid_t domid)
 {

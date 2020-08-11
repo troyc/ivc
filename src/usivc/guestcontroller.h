@@ -60,7 +60,6 @@ private:
     XenBackend::XenStore::WatchCallback mFrontendCallback;
     XenBackend::XenStore &mXs;
     domid_t mDomid;
-    bool mClearWatch{false};
 
     std::mutex mLock;
     bool mInitialized{false};
