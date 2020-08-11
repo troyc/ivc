@@ -33,6 +33,7 @@ ivcClient::~ivcClient() {
         LOG(mLog, ERROR) << "BUG: mRingbuffer has open references.\n";
     }
 
+    mEventController.closeEventChannel(mClient->event_channel);
     mEventCallback = nullptr;
 
     mClient->port = 0;
