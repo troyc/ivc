@@ -1412,9 +1412,6 @@ ks_platform_mmap(struct file *filp, struct vm_area_struct *vma)
     // don't allow remapping of memory to different sizes
     vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
 
-    // don't cache data in the pages
-    vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-
     // Find information about the relevant guest mapping.
     mmap_info = __find_mmap_info_by_id(mapping_id);
 
