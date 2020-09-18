@@ -211,7 +211,7 @@ libivc_core::daemonConnect(const char *path)
     if (mSock < 0)
         return -errno;
 
-    ::strncpy(reinterpret_cast<char*>(&un.sun_path), path, sizeof (un.sun_path));
+    ::strncpy(reinterpret_cast<char*>(&un.sun_path), path, sizeof (un.sun_path) - 1);
     if (::connect(mSock, reinterpret_cast<struct sockaddr *>(&un), sizeof (un)) < 0) {
         rc = -errno;
         this->daemonDisconnect();
@@ -340,7 +340,7 @@ libivc_core::registerServer(uint16_t port,
     mCallbackMap[key] = (void *)cb;
     mCallbackArgumentMap[key] = opaque;
 
-    return (struct libivc_server *)key;
+    return (struct libivc_server *)(uintptr_t)key;
 }
 
 void
@@ -355,7 +355,7 @@ struct libivc_server *
 libivc_core::findServer(domid_t domid, uint16_t port) {
     uint32_t key = dom_port_key(domid, port);
     if(mCallbackMap[key]) {
-        return (struct libivc_server *)key;
+        return (struct libivc_server *)(uintptr_t)key;
     }
 
     return nullptr;
