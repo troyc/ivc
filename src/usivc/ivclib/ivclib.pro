@@ -7,6 +7,8 @@ TARGET = ivc
 DESTDIR = ../lib
 TEMPLATE = lib
 
+VERSION = 2.0
+
 SOURCES += ../libivc.cpp
 SOURCES += ../libivc_core.cpp
 SOURCES += ../ivc_client.cpp

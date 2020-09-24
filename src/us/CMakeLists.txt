@@ -33,8 +33,8 @@ endif()
 include_directories(${hdrs})
 
 add_library(ivc SHARED ${srcs} ${hdr_files})
-set_target_properties(ivc PROPERTIES VERSION 0 SOVERSION 0)
-target_link_libraries (ivc ${CMAKE_THREAD_LIBS_INIT} ${IVC_LIBRARIES} )
+set_target_properties(ivc PROPERTIES VERSION 1.0 SOVERSION 1)
+target_link_libraries (ivc PUBLIC ${CMAKE_THREAD_LIBS_INIT} ${IVC_LIBRARIES} )
 
 
 #Also generate installation commands for libivc...
