@@ -16,6 +16,12 @@
 
 #define INT_MAX 2147483647
 
+#if defined(__x86_64__)
+#define ring_mb() asm volatile ("mfence" : : : "memory")
+#else
+#error "Memory barriers not implemented for this architecture."
+#endif
+
 // ============================================================================
 // Channel Functions
 // ============================================================================
@@ -141,7 +147,7 @@ int32_t ringbuffer_read(struct ringbuffer_channel_t *channel, char *buffer, int3
 {
     int32_t bytes_available = ringbuffer_bytes_available_read(channel);
     int32_t bytes_to_read = (bytes_available < length ? bytes_available : length);
-    volatile int32_t tmp = 0;
+    int32_t lloc;
 
     if(channel == 0) return -EINVAL;
     if(buffer == 0) return -EINVAL;
@@ -150,10 +156,13 @@ int32_t ringbuffer_read(struct ringbuffer_channel_t *channel, char *buffer, int3
     if(length > channel->body_length - 1) return -EFBIG;
     if(bytes_to_read <= 0) return bytes_to_read;
 
-    if(channel->header->lloc + bytes_to_read <= channel->body_length)
+    lloc = channel->header->lloc;
+    ring_mb(); // Read the header only once.
+
+    if(lloc + bytes_to_read <= channel->body_length)
     {
         int32_t i = 0;
-        char *read_buffer = channel->body + channel->header->lloc;
+        char *read_buffer = channel->body + lloc;
         char *write_buffer = buffer;
 
         for(i = 0; i < bytes_to_read; i++)
@@ -162,9 +171,9 @@ int32_t ringbuffer_read(struct ringbuffer_channel_t *channel, char *buffer, int3
     else
     {
         int32_t i = 0;
-        int32_t len1 = channel->body_length - channel->header->lloc;
+        int32_t len1 = channel->body_length - lloc;
         int32_t len2 = bytes_to_read - len1;
-        char *read_buffer1 = channel->body + channel->header->lloc;
+        char *read_buffer1 = channel->body + lloc;
         char *read_buffer2 = channel->body;
         char *write_buffer1 = buffer;
         char *write_buffer2 = buffer + len1;
@@ -175,9 +184,9 @@ int32_t ringbuffer_read(struct ringbuffer_channel_t *channel, char *buffer, int3
         for(i = 0; i < len2; i++)
             write_buffer2[i] = read_buffer2[i];
     }
-    
-    tmp = (channel->header->lloc + bytes_to_read) % channel->body_length;
-    channel->header->lloc = tmp;
+    ring_mb(); // Consume, then update index.
+    channel->header->lloc = (lloc + bytes_to_read) % channel->body_length;
+    ring_mb(); // Update index before it gets read.
     return length;
 }
 
@@ -185,7 +194,7 @@ int32_t ringbuffer_write(struct ringbuffer_channel_t *channel, char *buffer, int
 {
     int32_t bytes_available = ringbuffer_bytes_available_write(channel);
     int32_t bytes_to_write = (bytes_available > length ? length : bytes_available);
-    volatile int32_t tmp = 0;
+    int32_t rloc;
 
     if(channel == 0) return -EINVAL;
     if(buffer == 0) return -EINVAL;
@@ -194,11 +203,14 @@ int32_t ringbuffer_write(struct ringbuffer_channel_t *channel, char *buffer, int
     if(length > channel->body_length - 1) return -EFBIG;
     if(bytes_to_write <= 0) return bytes_to_write;
 
-    if(channel->header->rloc + bytes_to_write <= channel->body_length)
+    rloc = channel->header->rloc;
+    ring_mb(); // Read the header only once.
+
+    if(rloc + bytes_to_write <= channel->body_length)
     {
         int32_t i = 0;
         char *read_buffer = buffer;
-        char *write_buffer = channel->body + channel->header->rloc;
+        char *write_buffer = channel->body + rloc;
 
         for(i = 0; i < bytes_to_write; i++)
             write_buffer[i] = read_buffer[i];
@@ -206,11 +218,11 @@ int32_t ringbuffer_write(struct ringbuffer_channel_t *channel, char *buffer, int
     else
     {
         int32_t i = 0;
-        int32_t len1 = channel->body_length - channel->header->rloc;
+        int32_t len1 = channel->body_length - rloc;
         int32_t len2 = bytes_to_write - len1;
         char *read_buffer1 = buffer;
         char *read_buffer2 = buffer + len1;
-        char *write_buffer1 = channel->body + channel->header->rloc;
+        char *write_buffer1 = channel->body + rloc;
         char *write_buffer2 = channel->body;
 
         for(i = 0; i < len1; i++)
@@ -219,10 +231,9 @@ int32_t ringbuffer_write(struct ringbuffer_channel_t *channel, char *buffer, int
         for(i = 0; i < len2; i++)
             write_buffer2[i] = read_buffer2[i];
     }
-
-    tmp = (channel->header->rloc + bytes_to_write) % channel->body_length;
-    channel->header->rloc = tmp;
-
+    ring_mb(); // Produce, then update index.
+    channel->header->rloc = (rloc + bytes_to_write) % channel->body_length;
+    ring_mb(); // Update index before it gets read.
     return bytes_to_write;
 }
 
@@ -232,28 +243,41 @@ void ringbuffer_clear_buffer(struct ringbuffer_channel_t *channel)
     if (channel->header == 0) return;
 
     channel->header->lloc = channel->header->rloc;
+    ring_mb(); // Update index before it gets read.
 }
 
 int32_t ringbuffer_bytes_available_read(struct ringbuffer_channel_t *channel)
 {
+    unsigned int rloc, lloc;
+
+    rloc = channel->header->rloc;
+    lloc = channel->header->lloc;
+    ring_mb(); // Read the header only once.
+
     if(channel == 0) return -EINVAL;
     if(channel->header == 0) return -ENODEV;
 
-    if(channel->header->rloc >= channel->header->lloc)
-        return channel->header->rloc - channel->header->lloc;
+    if(rloc >= lloc)
+        return rloc - lloc;
     else
-        return (channel->body_length - channel->header->lloc) + channel->header->rloc;
+        return (channel->body_length - lloc) + rloc;
 }
 
 int32_t ringbuffer_bytes_available_write(struct ringbuffer_channel_t *channel)
 {
+    unsigned int rloc, lloc;
+
+    rloc = channel->header->rloc;
+    lloc = channel->header->lloc;
+    ring_mb(); // Read the header only once.
+
     if(channel == 0) return -EINVAL;
     if(channel->header == 0) return -ENODEV;
 
-    if(channel->header->rloc >= channel->header->lloc)
-        return (channel->body_length - channel->header->rloc) + channel->header->lloc - 1;
+    if(rloc >= lloc)
+        return (channel->body_length - rloc) + lloc - 1;
     else
-        return channel->header->lloc - channel->header->rloc - 1;
+        return lloc - rloc - 1;
 }
 
 void ringbuffer_set_flags(struct ringbuffer_channel_t *channel, uint32_t flags)
@@ -262,13 +286,18 @@ void ringbuffer_set_flags(struct ringbuffer_channel_t *channel, uint32_t flags)
     if(channel->header == 0) return;
 
     channel->header->reserved1 = flags;
+    ring_mb(); // Update flags before anything else.
 }
 
 int32_t ringbuffer_get_flags(struct ringbuffer_channel_t *channel)
 {
+    int32_t flags;
+
     if(channel == 0) return -EINVAL;
     if(channel->header == 0) return -ENODEV;
-    
 
-    return channel->header->reserved1;
+    flags = channel->header->reserved1;
+    ring_mb(); // Read the flags from header once.
+
+    return flags;
 }

@@ -51,14 +51,13 @@ ringbuf::write(uint8_t *buf, uint32_t len)
   // if we're a server we write on 1, as is tradition
   std::lock_guard<std::mutex> lock(mWriteLock);
   int bytesWritten = write_channel(mWriteChannel, buf, len);
-  xen_wmb();
+
   return bytesWritten;
 }
 
 int32_t  
 ringbuf::bytesAvailableWrite()
 {
-  xen_rmb();
   std::lock_guard<std::mutex> lock(mWriteLock);
   return ringbuffer_bytes_available_write(&mRb.channels[mWriteChannel]);
 }
@@ -67,7 +66,6 @@ int32_t
 ringbuf::read(uint8_t *buf, uint32_t len)
 {
   // if we're a server we read on 0, as is tradition
-  xen_rmb();
   std::lock_guard<std::mutex> lock(mReadLock);
   return read_channel(mReadChannel, buf, len);
 }
@@ -75,7 +73,6 @@ ringbuf::read(uint8_t *buf, uint32_t len)
 int32_t
 ringbuf::bytesAvailableRead()
 {
-  xen_rmb();
   std::lock_guard<std::mutex> lock(mReadLock);
   return ringbuffer_bytes_available_read(&mRb.channels[mReadChannel]); 
 }
