@@ -812,6 +812,8 @@ EXPORT_SYMBOL(libivc_isOpen);
 int
 libivc_write(struct libivc_client *ivc, char *src, size_t srcSize, size_t * actualLength)
 {
+    ssize_t n;
+
     libivc_checkp(ivc, INVALID_PARAM);
     libivc_checkp(src, INVALID_PARAM);
     libivc_checkp(actualLength, INVALID_PARAM);
@@ -821,8 +823,17 @@ libivc_write(struct libivc_client *ivc, char *src, size_t srcSize, size_t * actu
     libivc_checkp(ivc->ringbuffer, ACCESS_DENIED);
 
     mutex_lock(&ivc->mutex);
-    *actualLength = ringbuffer_write(outgoing_channel_for(ivc), src, srcSize);
+    n = ringbuffer_write(outgoing_channel_for(ivc), src, srcSize);
     mutex_unlock(&ivc->mutex);
+
+    if (n < 0) {
+        libivc_error("%s: Failed to write to dom%u:%u ring (%ld).\n", __func__,
+                ivc->remote_domid, ivc->port, n);
+        *actualLength = 0;
+        return n;
+    }
+
+    *actualLength = (size_t)n;
     return SUCCESS;
 }
 #ifdef KERNEL
@@ -833,7 +844,7 @@ EXPORT_SYMBOL(libivc_write);
 
 /**
  * Try to write EXACTLY srcSize bytes to the ivc channel.  If they can't be written
- * because the buffer is full, 0 is returned. (Packet style send)
+ * because the buffer is full, NO_SPACE is returned.
  * @param ivc - A connected ivc struct.
  * @param src - source buffer to write to the ivc connection.
  * @param srcSize - size of the source buffer and exact amount to write.
@@ -853,21 +864,28 @@ libivc_send(struct libivc_client *ivc, char *src, size_t srcSize)
 
     channel = outgoing_channel_for(ivc);
 
-    libivc_assert(ringbuffer_bytes_available_write(channel) >= (ssize_t)srcSize, NO_SPACE);
     mutex_lock(&ivc->mutex);
+    if (ringbuffer_bytes_available_write(channel) < (ssize_t)srcSize) {
+        mutex_unlock(&ivc->mutex);
+        libivc_error("%s: Cannot write %zuB, dom%u:%u ring is full.\n",
+                __func__, ivc->remote_domid, ivc->port, srcSize);
+        return NO_SPACE;
+    }
     actual = ringbuffer_write(channel, src, srcSize);
     mutex_unlock(&ivc->mutex);
 
-    rc = srcSize == actual ? SUCCESS : NO_SPACE;
+    // The mutex prevents threaded applications to clobber the ring.
+    // From here the write had to be successful. If for some reason it was not,
+    // the ring itself is lost and unrecoverable.
+    if (actual != srcSize)
+        libivc_error("%s: dom%u:%u ring corrupted.\n", __func__,
+                ivc->remote_domid, ivc->port);
 
     libivc_remote_events_enabled(ivc, &event_enabled);
-
-    if (event_enabled) 
-    {
+    if (event_enabled)
         libivc_notify_remote(ivc);
-    }
 
-    return rc;
+    return SUCCESS;
 }
 #ifdef KERNEL
 #ifdef __linux
@@ -888,17 +906,28 @@ int
 libivc_read(struct libivc_client *ivc, char *dest, size_t destSize, size_t * actualSize)
 {
     struct ringbuffer_channel_t *channel = NULL;
+    ssize_t n;
+
     libivc_checkp(ivc, INVALID_PARAM);
     libivc_checkp(ivc->ringbuffer, INVALID_PARAM);
     libivc_checkp(dest, INVALID_PARAM);
     libivc_checkp(actualSize, INVALID_PARAM);
     libivc_assert(destSize > 0, INVALID_PARAM);
- 
+
     channel = incoming_channel_for(ivc);
 
     mutex_lock(&ivc->mutex);
-    *actualSize = ringbuffer_read(channel, dest, destSize);
+    n = ringbuffer_read(channel, dest, destSize);
     mutex_unlock(&ivc->mutex);
+
+    if (n < 0) {
+        libivc_error("%s: Failed to read from dom%u:%u ring (%d).\n", __func__,
+                ivc->remote_domid, ivc->port, n);
+        *actualSize = 0;
+        return n;
+    }
+
+    *actualSize = (size_t)n;
     return SUCCESS;
 }
 #ifdef KERNEL
@@ -919,23 +948,34 @@ int
 libivc_recv(struct libivc_client *ivc, char *dest, size_t destSize)
 {
     struct ringbuffer_channel_t *channel = NULL;
-    size_t read;
+    ssize_t read;
 
     libivc_checkp(ivc, INVALID_PARAM);
     libivc_checkp(ivc->ringbuffer, INVALID_PARAM);
     libivc_checkp(dest, INVALID_PARAM);
-
     libivc_assert(destSize > 0, INVALID_PARAM);
 
     channel = incoming_channel_for(ivc);
 
-    libivc_assert(ringbuffer_bytes_available_read(channel) >= (ssize_t)destSize, NO_DATA_AVAIL);
-
     mutex_lock(&ivc->mutex);
+    if (ringbuffer_bytes_available_read(channel) < (ssize_t)destSize) {
+        mutex_unlock(&ivc->mutex);
+        libivc_error("%s: Cannot read %zuB, dom%u:%u ring is empty.\n",
+                __func__, destSize, ivc->remote_domid, ivc->port);
+        return NO_DATA_AVAIL;
+    }
+
     read = ringbuffer_read(channel, dest, destSize);
     mutex_unlock(&ivc->mutex);
 
-    return read == destSize ? SUCCESS : NO_DATA_AVAIL;
+    // The mutex prevents threaded applications to clobber the ring.
+    // From here the read had to be successful. If for some reason it was not,
+    // the ring itself is lost and unrecoverable.
+    if (read != destSize)
+        libivc_error("%s: dom%u:%u ring corrupted.\n", __func__,
+                ivc->remote_domid, ivc->port);
+
+    return SUCCESS;
 }
 #ifdef KERNEL
 #ifdef __linux
