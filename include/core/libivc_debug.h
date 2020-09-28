@@ -249,30 +249,19 @@ extern "C"
         return __VA_ARGS__; \
     }
 
-    ///
-    /// This function provide a wrapped printf (info). You can also define SYSLOG
-    /// in your settings file, and the functionality will convert to using
-    /// syslog instead of using printf. Use these functions just like
-    /// printf.
-    ///
-#ifndef NDEBUG
-  #define DEBUGGING_ENABLED 1
-#endif
-
 #ifdef TRACING_ENABLED
 #define libivc_trace(...) LIBIVC_ERROR(__FUNCTION__ TAG ": TRACE: " __VA_ARGS__);
 #else
 #define libivc_trace(...)
 #endif
 
-#ifdef DEBUGGING_ENABLED
-#define libivc_info(...) \
-    if (libivc_debug_is_enabled() == true) { \
-        LIBIVC_ERROR(TAG ": INFO: " __VA_ARGS__); \
-    }
-#else
-#define libivc_info(...)
-#endif
+    ///
+    /// This function provide a wrapped printf (info). You can also define SYSLOG
+    /// in your settings file, and the functionality will convert to using
+    /// syslog instead of using printf. Use these functions just like
+    /// printf.
+    ///
+#define libivc_info(...) LIBIVC_ERROR(TAG ": INFO: " __VA_ARGS__)
 
     ///
     /// This function provide a wrapped printf (warn). You can also define SYSLOG
@@ -280,10 +269,7 @@ extern "C"
     /// syslog instead of using printf. Use these functions just like
     /// printf.
     ///
-#define libivc_warn(...) \
-    if (libivc_debug_is_enabled() == true) { \
-        LIBIVC_ERROR(TAG ": WARNING: " __VA_ARGS__); \
-    }
+#define libivc_warn(...) LIBIVC_ERROR(TAG ": WARNING: " __VA_ARGS__)
 
     ///
     /// This function provide a wrapped printf (error). You can also define SYSLOG
@@ -291,10 +277,7 @@ extern "C"
     /// syslog instead of using printf. Use these functions just like
     /// printf.
     ///
-#define libivc_error(...) \
-    if (libivc_debug_is_enabled() == true) { \
-        LIBIVC_ERROR(TAG ": ERROR: " __VA_ARGS__); \
-    }
+#define libivc_error(...) LIBIVC_ERROR(TAG ": ERROR: " __VA_ARGS__)
 
     ///
     /// This function provide a wrapped printf (error). You can also define SYSLOG
@@ -303,8 +286,10 @@ extern "C"
     /// printf.
     ///
 #define libivc_debug(...) \
-    LIBIVC_ERROR(TAG ": DEBUG: " __VA_ARGS__); \
-     
+    if (libivc_debug_is_enabled() == true) { \
+        LIBIVC_ERROR(TAG ": DEBUG: " __VA_ARGS__); \
+    }
+
     ///
     /// Helpful for debugging issues
     ///
