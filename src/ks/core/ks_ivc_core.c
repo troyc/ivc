@@ -405,19 +405,16 @@ static int
 ks_ivc_send_connect_message(struct libivc_client *client)
 {
 #ifdef __linux
-    unsigned long timeout = 0;
+    unsigned long timeout;
 #else
 	LARGE_INTEGER TimeOut;
 	ULONG ticks;
 	LARGE_INTEGER CurTime;
 #endif
-  
+
     grant_ref_t *channel = NULL;
     libivc_message_t message;
     int rc = INVALID_PARAM;
-    MESSAGE_TYPE_T respType = MNONE; // will be set to the response message type.
-    uint16_t status = SUCCESS;
-    size_t avail = 0;
     struct libivc_client *targetComm = NULL;
 
     // make sure the client isn't NULL.
@@ -461,52 +458,68 @@ ks_ivc_send_connect_message(struct libivc_client *client)
 	//when we try to establish another connection, instead of reading back an ACK or NACK
 	//we read the leftover disconnect, which causes issues.
     libivc_clear_ringbuffer(targetComm);
-    
+
     // Otherwise, we should have grants that we want to communicate to a
     // remote domain. Open a chnanel for us to communicate them.
-    //
     libivc_checkp(client->mapped_grants, INVALID_PARAM);
-    channel = ks_ivc_core_open_grant_channel(client, &message); 
+    channel = ks_ivc_core_open_grant_channel(client, &message);
 
     libivc_disable_events(targetComm);
-    libivc_assert((rc = libivc_send(targetComm, (char *) &message,
-                                    sizeof (libivc_message_t))) == SUCCESS, rc);
-    wmb();
-    avail = 0;
-    memset(&message, 0, sizeof (libivc_message_t));
+
+    rc = libivc_send(targetComm, (void*)&message, sizeof (message));
+    switch (rc) {
+        case SUCCESS:
+            libivc_debug("CONNECT sent to dom%u:%u...\n", message.to_dom,
+                    message.port);
+            break;
+        case NO_SPACE:
+            libivc_error("CONNECT message could not be send to dom%u:%u, "
+                    "channel is full.\n", message.to_dom, message.port);
+            goto END;
+        default:
+            libivc_error("Failed to send CONNECT packet (%d).\n", rc);
+            goto END;
+    }
+
+    memset(&message, 0, sizeof (message));
+
+    // Events are disabled so prepare to poll until timeout.
 #ifdef __linux
-    timeout = jiffies + SEND_TIMEOUT;
+    timeout = jiffies + msecs_to_jiffies(6000);
 #else
-	//set timeout to 3 seconds
-	ticks = (3 * 10000000) / KeQueryTimeIncrement();
-	KeQueryTickCount(&TimeOut);
-	TimeOut.QuadPart += ticks;
+    KeQueryTickCount(&TimeOut);
+    TimeOut.QuadPart += (3 * 10000000) / KeQueryTimeIncrement();
 #endif
 
-    while (avail < sizeof (libivc_message_t)) 
-    {
-        rmb();
-        libivc_getAvailableData(targetComm, &avail);
-        if (avail < sizeof (libivc_message_t)) 
-        {
-            msleep(10); // give the system a chance to do something else.
+    rc = libivc_recv(targetComm, (void*)&message, sizeof (message));
+    while (rc != SUCCESS) {
+        switch (rc) {
+            case NO_DATA_AVAIL:
+                msleep(100);
+                break;
+            default:
+                libivc_error("Failed to receive from dom%u:%u channel while "
+                        "waiting for ACK packet, abandon (%d).\n",
+                        client->remote_domid, client->port, rc);
+                goto END;
         }
+
 #ifdef __linux
-        if (time_after(jiffies, timeout)) 
+        if (time_after(jiffies, timeout))
 #else
         KeQueryTickCount(&CurTime);
-        if (TimeOut.QuadPart < CurTime.QuadPart)
+        if(TimeOut.QuadPart < CurTime.QuadPart)
 #endif
         {
-            libivc_warn("Timed out waiting for connection response.\n");
+            libivc_warn("Connection to dom%u:%u timed out.\n",
+                    client->remote_domid, client->port);
             rc = TIMED_OUT;
             goto END;
         }
+
+        rc = libivc_recv(targetComm, (void*)&message, sizeof (message));
     }
 
-    rmb();
-    libivc_assert_goto((rc = libivc_recv(targetComm, (char *) &message,
-                                         sizeof (libivc_message_t))) == SUCCESS, END);
     // We have different cases to handle on the message back.
     // 1. On a channeled message, we expect an ACK message back and status SUCCESS
     //    if we initiated the connection.
@@ -515,39 +528,26 @@ ks_ivc_send_connect_message(struct libivc_client *client)
     // 3. On the chance that the remote dom fails or isn't listening, we expect an ACK
     //    and an appropriate status set in the status field. IE: CONNECTION_REFUSED
     // 2 and 3 will be treated as the same.
-    respType = (MESSAGE_TYPE_T) message.type;
-    if (respType == ACK) 
-    {
-        status = message.status;
-        if (status != SUCCESS) 
-        { // cases 2 and 3.
-            libivc_error("Connection attempt failed, status back was %d\n", status);
-            rc = status;
-            goto END;
-        } 
-        else 
-        {
-            rc = SUCCESS;
-        
-            //Finally, ask the xen backend to notify the other side if we go down.
-            //This ensures they're notified if we die violently and don't have a chance
-            //to send a disconnect ourselves.
-            ks_ivc_request_remote_notification_on_death(client, targetComm);
-        }
-    } 
-    else 
-    {
-        libivc_warn("An unexpected message type was sent back on the connection request. Type = %d\n", respType);
+    if (message.type != ACK) {
+        libivc_warn("Unexpected message (%d) received after connection request"
+                ", abort.\n", message.type);
         rc = INTERNAL_ERROR;
         goto END;
     }
+    if (message.status != SUCCESS) {
+        libivc_error("Connection failed (%d).\n", message.status);
+        rc = message.status;
+        goto END;
+    }
+    // Instruct the backend to handle notification upon death.
+    ks_ivc_request_remote_notification_on_death(client, targetComm);
+
+    libivc_debug("Connection to dom%u:%u established.\n", client->remote_domid,
+            client->port);
 
 END:
-    if (channel) 
-    {
+    if (channel)
         ks_ivc_core_close_grant_channel(channel);
-        channel = NULL;
-    }
 
     libivc_enable_events(targetComm);
 
