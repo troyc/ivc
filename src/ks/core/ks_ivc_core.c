@@ -47,37 +47,57 @@ ks_ivc_core_backend_event(int irq)
     int rc = INVALID_PARAM;
     UNUSED(irq);
 
-    memset(&inMessage, 0, sizeof (libivc_message_t));
+    memset(&inMessage, 0, sizeof (inMessage));
 
     libivc_disable_events(ivcXenClient);
-    rmb();
-    libivc_getAvailableData(ivcXenClient, &messageSize);
-
-    libivc_assert_goto(messageSize >= sizeof (libivc_message_t), END);
-    do 
-    {
-        rmb();
-        libivc_assert_goto((rc = libivc_recv(ivcXenClient, (char *) &inMessage,
-                                             sizeof (libivc_message_t))) == SUCCESS, END);
-
-        rc = INVALID_PARAM;
-        libivc_assert_goto(inMessage.to_dom == domId, END);
-        libivc_assert_goto(inMessage.msg_start == HEADER_START &&
-                           inMessage.msg_end == HEADER_END, END);
-        if (inMessage.type == CONNECT) 
-        {
-            rc = ks_ivc_core_handle_connect_msg(&inMessage);
-        } 
-        else if (inMessage.type == DISCONNECT) 
-        {
-            ks_ivc_core_handle_disconnect_msg(&inMessage);
+    do {
+        rc = libivc_recv(ivcXenClient, (void*)&inMessage, sizeof (inMessage));
+        switch (rc) {
+            case SUCCESS:
+                break;    // Packet read.
+            case NO_DATA_AVAIL:
+                goto END; // Nothing else to read.
+            default:
+                libivc_error("Failed to read IVC message (%d)\n", rc);
+                goto END; // Bail out.
         }
-        else if (inMessage.type == DOMAIN_DEAD)
-        {
-            ks_ivc_core_handle_domain_death_notification(&inMessage); 
+
+        if (inMessage.to_dom != domId ||
+            inMessage.msg_start != HEADER_START ||
+            inMessage.msg_end != HEADER_END) {
+                libivc_error("Invalid or corrupted IVC message, drop "
+                        "(target: dom%u, header:%#x-%#x)\n", rc,
+                        inMessage.msg_start, inMessage.msg_end);
+                goto END; // Bail out.
         }
-        libivc_getAvailableData(ivcXenClient, &messageSize);
-    } while (messageSize >= sizeof (libivc_message_t));
+
+        switch (inMessage.type) {
+            case CONNECT:
+                rc = ks_ivc_core_handle_connect_msg(&inMessage);
+                if (rc) {
+                    libivc_error("Failed to handle CONNECT message (%d), drop.\n", rc);
+                    // Flush and bail??
+                }
+                break;
+            case DISCONNECT:
+                rc = ks_ivc_core_handle_connect_msg(&inMessage);
+                if (rc) {
+                    libivc_error("Failed to handle DISCONNECT message (%d), drop.\n", rc);
+                    // Flush and bail??
+                }
+                break;
+            case DOMAIN_DEAD:
+                rc = ks_ivc_core_handle_domain_death_notification(&inMessage);
+                if (rc) {
+                    libivc_error("Failed to handle DOMAIN_DEAD Message (%d), drop.\n", rc);
+                    // Flush and bail??
+                }
+                break;
+            default:
+                libivc_error("Unknown message type %#x, drop.\n", inMessage.type);
+                break;
+        }
+    } while (1);
 END:
     // turn back on events from backend.
     libivc_enable_events(ivcXenClient);
