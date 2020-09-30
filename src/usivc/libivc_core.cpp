@@ -107,14 +107,14 @@ libivc_core::ivcAvailableSpace(struct libivc_client *client, size_t *dataSize) {
 }
 
 int
-libivc_core::sendResponse(const libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status)
+libivc_core::sendResponse(const libivc_message_t *msg, MESSAGE_TYPE_T type, uint16_t status)
 {
     // copy in the incoming message data to the response
     libivc_message_t respMsg;
     memcpy(&respMsg, msg, sizeof (libivc_message_t));
-    respMsg.status = (uint8_t) status;
+    respMsg.status = status;
     respMsg.to_dom = msg->from_dom;
-    respMsg.from_dom = (uint16_t) msg->to_dom;
+    respMsg.from_dom = msg->to_dom;
     respMsg.type = type;
 
     return this->daemonSend(&respMsg, sizeof (respMsg));

@@ -111,7 +111,7 @@ public:
     int ivcAvailableData(struct libivc_client *client, size_t *dataSize);
     int ivcAvailableSpace(struct libivc_client *client, size_t *dataSize);
 
-    int sendResponse(const libivc_message_t *msg, MESSAGE_TYPE_T type, uint8_t status);
+    int sendResponse(const libivc_message_t *msg, MESSAGE_TYPE_T type, uint16_t status);
     int handleConnectMessage(const libivc_message_t *msg);
     void handleDisconnectMessage(const libivc_message_t *msg);
     struct libivc_server *registerServer(uint16_t port,
