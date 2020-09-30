@@ -131,7 +131,7 @@ libivc_core::handleConnectMessage(const libivc_message_t *msg)
     int rc;
 
     // Have to provide a connected client here...
-    if(mCallbackMap.contains(key)) {
+    if (mCallbackMap.contains(key)) {
         struct libivc_client *client = createClient(msg->from_dom,
                                                     msg->port,
                                                     msg->descriptor,
@@ -143,9 +143,8 @@ libivc_core::handleConnectMessage(const libivc_message_t *msg)
             cb(mCallbackArgumentMap[key], client);
             return rc;
         }
-    }
-
-    if(mCallbackMap.contains(anykey)) {
+        LOG(mLog, INFO) << "Failed to create client for dom" << msg->from_dom << ":" << msg->port;
+    } else if (mCallbackMap.contains(anykey)) {
         struct libivc_client *client = createClient(msg->from_dom,
                                                     msg->port,
                                                     msg->descriptor,
@@ -157,8 +156,10 @@ libivc_core::handleConnectMessage(const libivc_message_t *msg)
             cb(mCallbackArgumentMap[anykey], client);
             return rc;
         }
+        LOG(mLog, INFO) << "Failed to create client for dom" << msg->from_dom << ":" << msg->port;
+    } else {
+        LOG(mLog, INFO) << "Connect call with no listening servers";
     }
-    LOG(mLog, INFO) << "Connect call with no listening servers";
 
     return sendResponse(msg, ACK, -ECONNREFUSED);
 }
