@@ -28,43 +28,41 @@ GuestController::~GuestController()
 
 void GuestController::forwardMessage(libivc_message_t *msg)
 {
-    if(mRb) {
-        int bytesWritten = mRb->write((uint8_t*)msg, sizeof(*msg));
+    if (mRb == nullptr)
+        return;
 
-        if(mControlEvent && mRb->getEventEnabled()) {
-            mControlEvent->notify();
-        }
+    if (mRb->write_packet((uint8_t*)msg, sizeof (*msg)) != sizeof (*msg)) {
+        DLOG(mLog, DEBUG) << "Failed to write packet to dom"
+            << msg->to_dom << ":" << msg->port << ".";
+        return;
     }
+
+    // Not initialized until "GuestReady" fires.
+    if (mControlEvent == nullptr)
+       return;
+
+    // XXX: There is no buffering, so what happens if EventEnabled is
+    // re-enabled later? Nothing fires the event again afaict.
+    if (mRb->getEventEnabled())
+        mControlEvent->notify();
 }
 
 void GuestController::processControlEvent()
 {
     libivc_message_t msg;
-    libivc_message_t rsp;
-    int bytesRead = 0;
-    memset(&msg, 0x00, sizeof(msg));
 
-    if(!mRb) {
+    if (mRb == nullptr) {
+        DLOG(mLog, DEBUG) << "Failed to process control event: ring-buffer not initialized.";
         return;
     }
 
-    bytesRead = mRb->read((uint8_t*)&msg, sizeof(msg));
-    if(bytesRead != sizeof(msg)) {
-        bytesRead = mRb->read((uint8_t*)&msg, sizeof(msg));
-    }
-
-    if(bytesRead == sizeof(msg)) {
-        emit clientMessage(msg);
-    } else {
+    memset(&msg, 0, sizeof (msg));
+    if (mRb->read_packet((uint8_t*)&msg, sizeof (msg)) != sizeof (msg)) {
+        DLOG(mLog, DEBUG) << "Failed to read control packet.";
         return;
     }
 
-    memcpy(&rsp, &msg, sizeof(rsp));
-    rsp.to_dom = msg.from_dom;
-    rsp.from_dom = msg.to_dom;
-    rsp.type = ACK;
-    rsp.status = 0;
-    forwardMessage(&rsp);
+    emit clientMessage(msg);
 }
 
 void GuestController::initializeGuest(grant_ref_t gref, evtchn_port_t port, int feState)

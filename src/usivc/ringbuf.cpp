@@ -128,4 +128,53 @@ ringbuf::write_channel(uint8_t channel_index, uint8_t *buf, uint32_t length)
   return rc;
 }
 
+int32_t
+ringbuf::read_packet(uint8_t *buf, uint32_t len)
+{
+  return channel_read_packet(mReadChannel, buf, len);
+}
+
+int32_t
+ringbuf::write_packet(const uint8_t *buf, uint32_t len)
+{
+  return channel_write_packet(mWriteChannel, buf, len);
+}
+
+int32_t
+ringbuf::channel_read_packet(uint8_t channel, uint8_t *buf, int32_t length)
+{
+  std::lock_guard<std::mutex> lock(mReadLock);
+  int rc;
+
+  if (ringbuffer_bytes_available_read(&mRb.channels[channel]) < length)
+    return NO_DATA_AVAIL;
+  rc = ringbuffer_read(&mRb.channels[channel], (char*)buf, length);
+  if (rc == length) {
+    std::cout << "Read " << length << "B on ringbuffer:" << std::endl;
+    hexdump(buf, rc);
+  } else
+    std::cout << "Read " << length << "B on ringbuffer failed (" << rc << ")"
+        << std::endl;
+
+  return rc;
+}
+
+int32_t
+ringbuf::channel_write_packet(uint8_t channel, const uint8_t *buf, int32_t length)
+{
+  std::lock_guard<std::mutex> lock(mWriteLock);
+  int rc;
+
+  if (ringbuffer_bytes_available_write(&mRb.channels[channel]) < length)
+    return NO_DATA_AVAIL;
+  rc = ringbuffer_write(&mRb.channels[channel], (char*)buf, length);
+  if (rc == length) {
+    std::cout << "Write " << length << "B on ringbuffer:" << std::endl;
+    hexdump(buf, rc);
+  } else
+    std::cout << "Write " << length << "B on ringbuffer failed (" << rc << ")"
+        << std::endl;
+
+  return rc;
+}
 

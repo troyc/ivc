@@ -20,19 +20,24 @@ public:
     ~ringbuf();
 
     bool getEventEnabled();
-    
+
     int32_t write(uint8_t *buf, uint32_t len);
     int32_t bytesAvailableWrite();
 
-    int32_t read(uint8_t *buf, uint32_t len);    
+    int32_t read(uint8_t *buf, uint32_t len);
     int32_t bytesAvailableRead();
     void dump_headers();
-    
+
+    int32_t read_packet(uint8_t *buf, uint32_t len);
+    int32_t write_packet(const uint8_t *buf, uint32_t len);
+
 private:
     uint8_t mWriteChannel;
     uint8_t mReadChannel;
     int32_t read_channel(uint8_t channel_index, uint8_t *buf, uint32_t length);
     int32_t write_channel(uint8_t channel_index, uint8_t *buf, uint32_t length);   
+    int32_t channel_read_packet(uint8_t channel, uint8_t *buf, int32_t length);
+    int32_t channel_write_packet(uint8_t channel, const uint8_t *buf, int32_t length);
     struct ringbuffer_t mRb;
     struct ringbuffer_channel_t mChannels[2];
     
