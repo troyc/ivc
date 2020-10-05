@@ -50,19 +50,26 @@ void GuestController::forwardMessage(libivc_message_t *msg)
 void GuestController::processControlEvent()
 {
     libivc_message_t msg;
+    int rc;
 
     if (mRb == nullptr) {
         DLOG(mLog, DEBUG) << "Failed to process control event: ring-buffer not initialized.";
         return;
     }
 
-    memset(&msg, 0, sizeof (msg));
-    if (mRb->read_packet((uint8_t*)&msg, sizeof (msg)) != sizeof (msg)) {
-        DLOG(mLog, DEBUG) << "Failed to read control packet.";
-        return;
-    }
-
-    emit clientMessage(msg);
+    do {
+        rc = mRb->read_packet((uint8_t*)&msg, sizeof (msg));
+        switch (rc) {
+        case (sizeof (msg)):
+            emit clientMessage(msg);
+            /* fall through */
+        case NO_DATA_AVAIL:
+        case 0:
+            break;
+        default:
+            DLOG(mLog, DEBUG) << "Failed to read control packet.";
+        }
+    } while (rc == sizeof (msg));
 }
 
 void GuestController::initializeGuest(grant_ref_t gref, evtchn_port_t port, int feState)
