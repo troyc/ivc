@@ -16,10 +16,21 @@
 
 #define INT_MAX 2147483647
 
-#if defined(__x86_64__)
-#define ring_mb() asm volatile ("mfence" : : : "memory")
-#else
-#error "Memory barriers not implemented for this architecture."
+#if defined(__linux__)
+ #if defined(__i386__) || defined(__x86_64__)
+  #define ring_mb() asm volatile ("mfence" : : : "memory")
+ #else /* !__i386__ || !__x86_64__ */
+  #define ring_mb()
+  #warning "Memory barriers not implemented for this architecture."
+ #endif
+#elif defined(_WIN32)
+ #if defined(KERNEL)
+  #include <wdm.h>
+  #define ring_mb() KeMemoryBarrier()
+ #else /* !KERNEL */
+  #include <winnt.h>
+  #define ring_mb() MemoryBarrier()
+ #endif
 #endif
 
 // ============================================================================
