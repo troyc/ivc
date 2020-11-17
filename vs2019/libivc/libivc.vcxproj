@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\configs.props" />
+  <ItemGroup>
+    <ClCompile Include="..\..\src\core\libivc.c" />
+    <ClCompile Include="..\..\src\core\libivc_debug.c" />
+    <ClCompile Include="..\..\src\data-structures\ringbuffer.c" />
+    <ClCompile Include="..\..\src\us\platform\windows\us_platform.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\core\ivc_ioctl_defs.h" />
+    <ClInclude Include="..\..\include\core\libivc.h" />
+    <ClInclude Include="..\..\include\core\libivc_debug.h" />
+    <ClInclude Include="..\..\include\core\libivc_private.h" />
+    <ClInclude Include="..\..\include\core\libivc_types.h" />
+    <ClInclude Include="..\..\include\core\list.h" />
+    <ClInclude Include="..\..\include\ks\platform\windows\wintypes.h" />
+    <ClInclude Include="..\..\include\us\platform\windows\us_platform.h" />
+    <ClInclude Include="..\..\src\data-structures\ringbuffer.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DAB8D571-F9FA-4DD5-843B-106331F98F2E}</ProjectGuid>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
+    <RootNamespace>libivc</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <IvcDir>$(MSBuildProjectDirectory)\..\..\</IvcDir>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <TargetExt>.dll</TargetExt>
+  </PropertyGroup>
+  <Import Project="..\targets.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <PropertyGroup>
+  <RunCodeAnalysis>true</RunCodeAnalysis>
+  <EnableInf2cat>false</EnableInf2cat>
+  <IntDir>..\$(ProjectName)\$(ConfigurationName)\$(Platform)\</IntDir>
+  <OutDir>..\$(ConfigurationName)\$(Platform)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(IvcDir)include;$(IvcDir)include\ks;$(IvcDir)include\us\platform\windows;$(IvcDir)include\us;$(IvcDir)include\core;$(IvcDir)include\ks\platform;$(IvcDir)include\ks\platform\windows;$(IvcDir)src\data-structures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>COMPILING_DLL=1;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <DisableSpecificWarnings>4255;4668;4820;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <MinimalRebuild Condition="'$(Configuration)|$(Platform)'=='Windows 10 Debug|x64'">false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Windows 10 Release'">
+    <ClCompile>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalOptions>/Qspectre %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <FilesToPackage Include="$(TargetPath)" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

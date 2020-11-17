@@ -28,7 +28,7 @@
   #include <wdm.h>
   #define ring_mb() KeMemoryBarrier()
  #else /* !KERNEL */
-  #include <winnt.h>
+  #include <windows.h>
   #define ring_mb() MemoryBarrier()
  #endif
 #endif
